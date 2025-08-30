@@ -9,12 +9,14 @@ assert(isa(R2,'SerialLink'), 'R2 debe ser un objeto SerialLink (RTB de Corke).')
 assert(R1.mdh == 0, 'Se espera DH estándar (R1.mdh == 0).');
 
 %% === Configuración articular de ejemplo ===
-q1 = [pi/2, -pi/4, 0, pi/3, pi, 0];
-q2 = q1;   % idéntico al primero (puedes cambiarlo luego)
+q1 = [pi/2, -pi/4, 0, pi/3, pi/3, 0];
+q2 = [pi/2, -pi/4, 0, -pi/3, pi/3, 0];
+  % idéntico al primero 
 R1.base = transl(0.5,0,0)*trotz(pi/4);
 R2.base = transl(-0.5,0,0)*trotz(-pi/4);
 
 R1.tool = trotz(pi/3);
+R2.tool = R1.tool;
 % sistemas1 = true(1, R1.n + 1);
 % sistemas2 = true(1, R2.n + 1);
 sistemas1 = [1, 0, 0, 0, 0, 0,0];
@@ -55,7 +57,7 @@ for i = 0:R1.n
                'text_opts',{'FontSize',14});
     end
 end
-
+hold on;
 for i = 0:R2.n
     if sistemas2(i+1)
         trplot(Tlist2{i+1}, 'frame', sprintf('{%d}_2',i), ...
@@ -63,10 +65,10 @@ for i = 0:R2.n
                'text_opts',{'FontSize',14});
     end
 end
+hold off;
+R1.plot(q1, 'workspace', workspace, 'scale',0.8, 'jointdiam',1.4, 'notiles','nowrist');hold on;
 
-R1.plot(q1, 'workspace', workspace, 'scale',0.8, 'jointdiam',1.4, 'notiles');hold on;
-
-R2.plot(q2, 'workspace', workspace, 'scale',0.8, 'jointdiam',1.4, 'notiles');hold off;
+R2.plot(q2, 'workspace', workspace, 'scale',0.8, 'jointdiam',1.4, 'notiles','nowrist');hold off;
 xlabel('X'); ylabel('Y'); zlabel('Z');
 title('Robots colaborativos');
 grid on; 
