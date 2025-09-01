@@ -1,0 +1,21 @@
+clc;
+DH = [
+0.000 0.195 0.300 0.000 0;
+0.000 0.000 0.250 0.000 0;
+0.000 0.000 0.000 pi 1;
+0.000 0.000 0.000 0.000 0];
+R = SerialLink(DH);
+q = [0,0,0,0];
+T = R.fkine(q);
+disp(T)
+ %% == SCARA TP3 == %%
+% %% == SCARA TP3 == %%
+% dh_scara = [    0   0.262   0.200     pi     0;   % eje 1
+%                 0   0       0.250     0      0;   % eje 2
+%                 0   0       0        0      1;   % eje 3 (P)
+%                 0   0       0        0      0];  % eje 4
+% R1 = SerialLink(dh_scara);
+% q = [0,0,0,0];
+% T = R1.fkine(q);
+% disp("Scara EJ5 tp3\n");
+% disp(T)
