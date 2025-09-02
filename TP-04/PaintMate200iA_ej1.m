@@ -28,5 +28,7 @@ for k = 1:size(Q,1)
         T = T*A_dh(Q(k,i),d,a,alpha);
     end
     fprintf('Configuracion %d\r\n', k);
+    dist_base = sqrt(T(1,4)^2+T(2,4)^2+T(3,4)^2);
+    fprintf('distancia a la base:%f\r',dist_base)
     disp(T);
 end
