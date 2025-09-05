@@ -16,20 +16,18 @@ function esp_trab()
     end
     
     % --- Parámetros de la simulación ---
-    pasos = 200; % Puntos a calcular por cada articulación. Aumentar para más definición.
+    pasos = 200; % Puntos a calcular por cada articulación.
 
     %% ===================================================================
     %               GRÁFICO 1: VISTA LATERAL (PLANO XZ)               
     %=====================================================================%
-    fprintf('Calculando contorno de la vista lateral (Plano XZ)...\n');
     
     % Creamos vectores de ángulos para el hombro (q2) y el codo (q3)
     q2_range = linspace(R1.qlim(2,1), R1.qlim(2,2), pasos);
     q3_range = linspace(R1.qlim(3,1), R1.qlim(3,2), pasos);
     
-    contorno_xz = [];
+    contorno_xz = zeros(length(q2_range),2);
     
-    % Dejamos la muñeca en una posición "recta" para maximizar el alcance
     q_muneca = [0, 0, 0]; 
     
     % Bucle anidado para probar todas las combinaciones de q2 y q3
@@ -78,51 +76,33 @@ function esp_trab()
     fprintf('Calculando contorno de la vista superior (Plano XY)...\n');
     
     q1_range = linspace(R1.qlim(1,1), R1.qlim(1,2), pasos*2);
-    contorno_exterior_xy = [];
-    contorno_interior_xy = [];
+    contorno_ext_xy = zeros(length(q1_range), 2);
     
     % Simplificación para alcance máximo y mínimo
-    q_max_alcance = [0, 0, 0, q_muneca];
-    q_min_alcance = [0, R1.qlim(2,2), R1.qlim(3,1), q_muneca];
+    q_alcance = [0, R1.qlim(2,2), R1.qlim(3,1), q_muneca];
     
-    for q1 = q1_range
-        q_max_alcance(1) = q1;
-        T_ext = R1.fkine(q_max_alcance);
-        contorno_exterior_xy(end+1, :) = [T_ext.t(1), T_ext.t(2)];
-        
-        q_min_alcance(1) = q1;
-        T_int = R1.fkine(q_min_alcance);
-        contorno_interior_xy(end+1, :) = [T_int.t(1), T_int.t(2)];
+    for i = 1:length(q1_range)        q_alcance(1) = q1;
+        T_ext = R1.fkine(q_alcance);
+        contorno_ext_xy(, :) = [T_ext.t(1), T_ext.t(2)];
     end
 
     figure('Name', 'Workspace Contorno - Vista Superior (Plano XY)', 'NumberTitle', 'off');
     hold on;
-    plot(contorno_exterior_xy(:,1), contorno_exterior_xy(:,2), 'r-');
-    plot(contorno_interior_xy(:,1), contorno_interior_xy(:,2), 'b-');
+    plot(contorno_ext_xy(:,1), contorno_ext_xy(:,2), 'r-');
     title('Contorno del Espacio de Trabajo (Plano XY)');
     xlabel('Alcance en X (m)'); ylabel('Alcance en Y (m)');
-    legend('Contorno Exterior', 'Contorno Interior');
+    legend('Contorno Exterior');
     grid on; axis equal;
 
-    % --- INICIO: CÓDIGO PARA ACOTACIONES (PLANO XY) ---
     
     % 1. Cota para el radio exterior
-    punto_ext = contorno_exterior_xy(50,:); % Tomamos el primer punto del contorno
+    punto_ext = contorno_ext_xy(50,:); % Tomamos el primer punto del contorno
     radio_ext = norm(punto_ext); % Calculamos la distancia al origen (radio)
     line([0, punto_ext(1)], [0, punto_ext(2)], 'Color', 'r', 'LineStyle', cota_style);
     texto_ext = sprintf('R_{ext} = %.2f m', radio_ext);
-    text(punto_ext(5)/2, punto_ext(5)/2, texto_ext, 'Color', 'r', 'BackgroundColor', 'w');
-
-    % 2. Cota para el radio interior
-    punto_int = contorno_interior_xy(1,:); % Tomamos el primer punto del contorno
-    radio_int = norm(punto_int); % Calculamos la distancia al origen (radio)
-    line([0, punto_int(1)], [0, punto_int(2)], 'Color', 'b', 'LineStyle', cota_style);
-    texto_int = sprintf('R_{int} = %.2f m', radio_int);
-    text(punto_int(1)/2, punto_int(2)/2, texto_int, 'Color', 'b', 'BackgroundColor', 'w');
+    text(0, punto_ext(1)/2, texto_ext, 'Color', 'r', 'BackgroundColor', 'w');
     
-    % --- FIN: CÓDIGO PARA ACOTACIONES ---
     
     hold off;
     
-    fprintf('Cálculos finalizados.\n');
 end
