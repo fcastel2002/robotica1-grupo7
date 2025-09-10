@@ -1,7 +1,7 @@
 clc, clear, close all
 
-if exist('robot.m', 'file') == 2
-    run('robot.m');
+if exist('robot_v2.m', 'file') == 2
+    run('robot_v2.m');
 end
 %% === Verificación de robots ===
 assert(isa(R1,'SerialLink'), 'R1 debe ser un objeto SerialLink (RTB de Corke).');
@@ -9,14 +9,10 @@ assert(isa(R2,'SerialLink'), 'R2 debe ser un objeto SerialLink (RTB de Corke).')
 assert(R1.mdh == 0, 'Se espera DH estándar (R1.mdh == 0).');
 
 %% === Configuración articular de ejemplo ===
-q1 = [pi/2, -pi/4, 0, pi/3, pi/3, 0];
-q2 = [pi/2, -pi/4, 0, -pi/3, pi/3, 0];
-  % idéntico al primero 
-R1.base = transl(0.5,0,0)*trotz(pi/4);
-R2.base = transl(-0.5,0,0)*trotz(-pi/4);
+q1 = [0, 0, 0, 0, 0, 0];
+q2 = [0, 0, 0, 0, 0, 0];
+ 
 
-R1.tool = trotz(pi/3);
-R2.tool = R1.tool;
 % sistemas1 = true(1, R1.n + 1);
 % sistemas2 = true(1, R2.n + 1);
 sistemas1 = [1, 0, 0, 0, 0, 0,0];
@@ -72,4 +68,4 @@ R2.plot(q2, 'workspace', workspace, 'scale',0.8, 'jointdiam',1.4, 'notiles','now
 xlabel('X'); ylabel('Y'); zlabel('Z');
 title('Robots colaborativos');
 grid on; 
-R2.teach(q2);
+R1.teach(q1);

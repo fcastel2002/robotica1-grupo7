@@ -3,6 +3,10 @@
 %definimos matriz DH
 
 % dh = [tita d a alfa sigma]
+% 1. tita_i: Ángulo alrededor del eje Z_i-1 , desde el eje X_i-1 hasta el eje Z_i.
+% 2. d_i: Distancia a lo largo del eje Z_i-1, desde el origen del sistema i-1 hasta el eje X_i.
+% 3. a_i: Distancia a lo largo del eje X_i, desde el eje Z_i-1 hasta el eje Z_i.
+% 4. alfa_i: Ángulo alrededor del eje X_i, desde el eje Z_i-1 hasta el eje Z_i.
 
 dh = [ 0    0.290   0      -pi/2   0;
        0    0       0.270   0      0;

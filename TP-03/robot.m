@@ -22,6 +22,8 @@ R1.qlim = deg2rad([ -165  165;
                    -120  120;
                    -400  400 ]);
 R2.qlim = R1.qlim;
+R1.base = transl(0.490+0.09,0,0); % la medida de separcion de 980mm divido/2 sumado el radio de la base.
+R2.base = transl(-0.490-0.09,0,0);
 R1.offset = [0, -pi/2, 0, 0, 0, 0];
 R2.offset = R1.offset;
 robots = {R1, R2};
