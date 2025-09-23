@@ -25,8 +25,13 @@ R1.qlim = deg2rad([ -165  165;
                     -120  120;
                     -400  400 ]);
 R2.qlim = R1.qlim;
+<<<<<<< HEAD
 
 % Desfase (offset) para corregir la posición cero de las articulaciones
+=======
+R1.base = transl(0.490+0.09,0,0); % la medida de separcion de 980mm divido/2 sumado el radio de la base.
+R2.base = transl(-0.490-0.09,0,0);
+>>>>>>> 7651006827fbf7a0abe1140c312e05cf436468eb
 R1.offset = [0, -pi/2, 0, 0, 0, 0];
 R2.offset = R1.offset;
 
