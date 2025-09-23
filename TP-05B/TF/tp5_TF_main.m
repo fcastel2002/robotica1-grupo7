@@ -2,7 +2,7 @@
 run robot.m
 
 % 2. Generar una pose alcanzable con CD
-q_test = [60 -20 35 -10 15  90]*pi/180;  % config articular de prueba
+q_test = [ 25 -85 30 60 -75 30 ]*pi/180;  % config articular de prueba
 T = R1.fkine(q_test); if isa(T,'SE3'), T = T.double; end
 
 % 3. Supongamos que el robot está en q0 = [0 0 0 0 0 0]
