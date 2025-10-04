@@ -18,27 +18,28 @@ function Q = cin_inv_barista(R, T, q0, q_mejor)
     q0 = q0(:);
 
     % ===== 0) neutralizar base/tool y offsets (como recomienda la cátedra) =====
-    T = invHomog(double(R.base)) * T * invHomog(double(R.tool));                    % 
-    offsets = R.offset;  R.offset = zeros(size(offsets));                           % 
+    T = invHomog(double(R.base)) * T * invHomog(double(R.tool));                    
+    offsets = R.offset;  
+    R.offset = zeros(size(offsets));                           
 
     % ===== 1) Pieper - Problema de POSICIÓN: q1,q2,q3 (hasta 4 soluciones) =====
     d6  = R.links(6).d;
     p6  = T(1:3,4);
     z6  = T(1:3,3);
-    pc  = p6 - d6*z6;                                                               % 
+    pc  = p6 - d6*z6;                                                               
 
     q1_a = atan2(pc(2),pc(1));                          % primer plano
     q1_b = wrapToPi(q1_a + pi);                         % plano opuesto             
     q1_all = [q1_a; q1_b];
 
-    L2 = R.links(2).a;  % 0.270 en tu robot.m
-    L3 = R.links(3).a;  % 0.070 en tu robot.m
+    L2 = R.links(2).a;  
+    L3 = R.links(3).a;  
 
     sols13 = [];  % filas: [q1 q2 q3]
     for i=1:2
         q1 = q1_all(i);
-        T01 = R.links(1).A(q1).double;                  % DH real del link 1
-        p1  = invHomog(T01) * [pc;1];  p1 = p1(1:3);    % referenciar pc a {1}      
+        T01 = R.links(1).A(q1).double;                 
+        p1  = invHomog(T01) * [pc;1];  p1 = p1(1:3);         
 
         x1 = p1(1); y1 = p1(2);
         r  = hypot(x1,y1);
@@ -71,7 +72,7 @@ function Q = cin_inv_barista(R, T, q0, q_mejor)
         T2 = T1*R.links(2).A(q2).double;
         T3 = T2*R.links(3).A(q3).double;
 
-        T36 = invHomog(T3) * T;                                                 % 
+        T36 = invHomog(T3) * T;                                                
 
         % q4 base: usando proyección del eje Z de T36 sobre plano X3-Y3
         q4_1 = atan2(T36(2,3), T36(1,3));
@@ -85,22 +86,20 @@ function Q = cin_inv_barista(R, T, q0, q_mejor)
             % Chequeo degenerado: q5 ~ 0 (Z4 || Z6)                              
             if abs(T36(3,3) - 1) < eps
                 % caso degenerado: fijar q4 con q0(4) y resolver sólo q6
-                q4d = q0(4);                             % estrategia recomendada
+                q4d = q0(4);                            
                 T4d = R.links(4).A(q4d).double;
                 T46d= invHomog(T4d) * T36;
                 q5d = 0;
-                q6d = atan2(T46d(2,1), T46d(1,1));       % ajustar por q4 ya aplicado
+                q6d = atan2(T46d(2,1), T46d(1,1));       
                 QQ(:,end+1) = wrap_all([q1;q2;q3;q4d;q5d;q6d]); %#ok<AGROW>
-                continue
-            end
+                continue;
+             end
 
             % q5 desde proyección del Z del extremo respecto a {4}
-            q5 = atan2(T46(2,3), T46(1,3)) - pi/2;                                % 
-
-            % q6 desde X6 en {5}
+            q5 = atan2(T46(2,3), T46(1,3)) - pi/2;                               
             T5  = R.links(5).A(q5).double;
             T56 = invHomog(T5) * T46;
-            q6  = atan2(T56(2,1), T56(1,1));                                      % 
+            q6  = atan2(T56(2,1), T56(1,1));                                      
 
             QQ(:,end+1) = wrap_all([q1;q2;q3;q4;q5;q6]); %#ok<AGROW>
         end
