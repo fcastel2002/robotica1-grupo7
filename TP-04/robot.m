@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 %=====================================================
 %               ARCHIVO DE DEFINICIÓN DEL ROBOT
 %=====================================================
@@ -18,7 +17,6 @@ clc; clear; close all;
 % 3. a_i: Distancia a lo largo del eje X_i, desde el eje Z_i-1 hasta el eje Z_i.
 % 4. alfa_i: Ángulo alrededor del eje X_i, desde el eje Z_i-1 hasta el eje Z_i.
 
->>>>>>> 7651006827fbf7a0abe1140c312e05cf436468eb
 dh = [ 0    0.290   0      -pi/2   0;
        0    0       0.270   0      0;
        0    0       0.070  -pi/2   0;
@@ -26,7 +24,6 @@ dh = [ 0    0.290   0      -pi/2   0;
        0    0       0      -pi/2   0;
        0    0.072   0       0      0 ];
 
-<<<<<<< HEAD
 % Creación de los objetos SerialLink para los dos robots
 R1 = SerialLink(dh,'name','Robot Barista 1');
 R2 = SerialLink(dh,'name','Robot Barista 2');
@@ -47,7 +44,6 @@ R2.offset = R1.offset;
 % Límites del área de graficación [Xmin Xmax Ymin Ymax Zmin Zmax]
 limx = 1.0; limy = 1.0; limz = 1.2;
 ws_limites = [-limx, limx, -limy, limy, 0, limz];
-=======
 
 
 R1 = SerialLink(dh,'name','ABB IRB120 SC #1');
@@ -71,4 +67,3 @@ limy = 1.3;
 limz = 1.3;
 workspace = [-limx limx -limy limy 0 limz];
 
->>>>>>> 7651006827fbf7a0abe1140c312e05cf436468eb
