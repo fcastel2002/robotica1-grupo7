@@ -65,14 +65,16 @@ function Q = ik_barista(R, T, q0, q_mejor)
     q2_list(2) = atan2(-s,r) - atan2(L3*sin(q3_list(2)),L2+L3*cos(q3_list(2)));
     q2_list(3) = atan2(-s,-r) - atan2(L3*sin(q3_list(1)),L2+L3*cos(q3_list(1)));
     q2_list(4) = atan2(-s,-r) - atan2(L3*sin(q3_list(2)),L2+L3*cos(q3_list(2)));
-    
+    %preguntar a profe, no se por qué así funciona
+
     %% correcion q3 
     q3(1) = q3_list(1)-phi;
     q3(2) = q3_list(2)-phi;
-
-    sols_13(1,:) = [q1_list(1) q1_list(1) q1_list(1) q1_list(1) q1_list(2) q1_list(2) q1_list(2) q1_list(2)];
-    sols_13(2,:) = [q2_list(1) q2_list(1) q2_list(2) q2_list(2) q2_list(3) q2_list(3) q2_list(4) q2_list(4)];
-    sols_13(3,:) = [     q3(1)      q3(1)      q3(2)      q3(2)      q3(1)      q3(1)      q3(2)      q3(2)];
+    
+    %% planteamos las 8 soluciones genericas hasta el problema de posicion (por eso se repiten)
+    q_sols_13(1,:) = [q1_list(1) q1_list(1) q1_list(1) q1_list(1) q1_list(2) q1_list(2) q1_list(2) q1_list(2)];
+    q_sols_13(2,:) = [q2_list(1) q2_list(1) q2_list(2) q2_list(2) q2_list(3) q2_list(3) q2_list(4) q2_list(4)];
+    q_sols_13(3,:) = [     q3(1)      q3(1)      q3(2)      q3(2)      q3(1)      q3(1)      q3(2)      q3(2)];
     
     %% Primer verificacion posicion muñeca
     disp('Verificación centro de muñeca :')
@@ -80,7 +82,7 @@ function Q = ik_barista(R, T, q0, q_mejor)
     for i=1:8
         T03 = eye(4);
         for j=1:3
-            T03 = T03 * R.links(j).A(sols_13(j,i)).double;
+            T03 = T03 * R.links(j).A(q_sols_13(j,i)).double;
         end
         % p_pred = (T03 * [0;0;R.links(4).d;1]);
         % Si el origen de la muñeca está a distancia d4 a lo largo de z3:
@@ -90,12 +92,61 @@ function Q = ik_barista(R, T, q0, q_mejor)
     end
     
     %% = Problema de orientación =
-    T1 = R.links(1).A(q1).double;
+   for i=1:2:7
+       q1 = q_sols_13(1,i);
+       q2 = q_sols_13(2,i);
+       q3 = q_sols_13(3,i);
+       [q4,q5,q6] = calcular_orient(R, q1,q2,q3, T, q0);
+       q_sols_46(1:3, i:i+1) = [q4;q5;q6];
+   end
+   qq = q_sols_13;
+   qq(4:6,:) = q_sols_46;
+   %% restauracion de offsets
+   R.offset = offsets;
+   
 
 end
 % ===== Helpers locales =====
 function [q4,q5,q6] = calcular_orient(R, q1,q2,q3, T,q0)
-    
+    T1 = R.links(1).A(q1).double;
+    T2 = R.links(2).A(q2).double;
+    T3 = R.links(3).A(q3).double;
+    T36 = invHomog(T3) * invHomog(T2) * invHomog(T1) * T; %dato del problema
+    disp(T36(3,3));
+    % caso degenerado
+    if(abs(T36(3,3)-1)<eps)
+        % asumimos q4 igual al anterior para resolver las infinitas
+        % soluciones
+        q4(1) = q0(4); %q0 es el vector que le paso
+        q5(1) = 0;
+        q6(1) = atan2(T36(2,1), T36(1,1)) - q4(1);
+        q4(2) = q4(1);
+        q5(2) = 0;
+        q6(2) = q6(1);
+    else
+        q4(1) = atan2(-T36(2,3), -T36(1,3));
+        if q4(1) > 0
+            q4(2) = q4(1) - pi;
+        else
+            q4(2) = q4(1) + pi; 
+        end
+        q5 = zeros(1,2);
+        q6 = q5;
+
+        for i=1:2
+            T4 = R.links(4).A(q4(i)).double;
+            T6 = invHomog(T4) * T36;
+            q5(i) = atan2(T6(2,3), T6(1,3)) - pi/2;
+            T5 = R.links(5).A(q5(i)).double;
+            T6 = invHomog(T5) * T6;
+            q6(i) = atan2(T6(2,1),T6(1,1));
+        end
+
+    end
+
+
+
+
 end
 function Ti = invHomog(T)
     if isa(T,'SE3'), T = T.double; end
