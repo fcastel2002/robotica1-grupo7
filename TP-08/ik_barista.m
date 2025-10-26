@@ -31,8 +31,8 @@ function Q = ik_barista(R, T, q0, q_mejor)
 
     % punto de muñeca
 
-    pwrist = T(1:3,4) - R.links(6).d *T(1:3,3);
-    L2 = R.links(2).a; 
+    pwrist = T(1:3,4) - R.links(6).d * T(1:3,3);
+    L2 = R.links(2).a; %0.27
     L3 = hypot(R.links(3).a,R.links(4).d); 
     phi = atan2(R.links(4).d,R.links(3).a); 
 
@@ -48,11 +48,9 @@ function Q = ik_barista(R, T, q0, q_mejor)
     r = hypot(pwrist(2),pwrist(1));
     s = pwrist(3) - R.links(1).d;
     arg = (s*s + r*r - L2*L2 - L3*L3)/(2*L2*L3); %cos(theta3)
-
     if abs(arg)>1
         warning("argumento imaginario, punto posiblemente fuera de alcance de muñeca")
     end
-    
     arg = real(arg);
     q3_list(1) = atan2(sqrt(1-arg*arg), arg); % arcocoseno pero con atan2
 
@@ -61,18 +59,20 @@ function Q = ik_barista(R, T, q0, q_mejor)
 
     %% == q2 == 
     q2_list = [0 0 0 0];
-    for j =1:2
-        q2_list(j) = atan2(s,r) - atan2(L3*sin(q3_list(j)),L2+L3*cos(q3_list(j)));
-    end
-    q2_list(3) = q2_list(1)+pi;
-    q2_list(4) = q2_list(2)+pi;
+    
+    
+    q2_list(1) = atan2(-s,r) - atan2(L3*sin(q3_list(1)),L2+L3*cos(q3_list(1)));
+    q2_list(2) = atan2(-s,r) - atan2(L3*sin(q3_list(2)),L2+L3*cos(q3_list(2)));
+    q2_list(3) = atan2(-s,-r) - atan2(L3*sin(q3_list(1)),L2+L3*cos(q3_list(1)));
+    q2_list(4) = atan2(-s,-r) - atan2(L3*sin(q3_list(2)),L2+L3*cos(q3_list(2)));
+    
     %% correcion q3 
     q3(1) = q3_list(1)-phi;
     q3(2) = q3_list(2)-phi;
 
     sols_13(1,:) = [q1_list(1) q1_list(1) q1_list(1) q1_list(1) q1_list(2) q1_list(2) q1_list(2) q1_list(2)];
     sols_13(2,:) = [q2_list(1) q2_list(1) q2_list(2) q2_list(2) q2_list(3) q2_list(3) q2_list(4) q2_list(4)];
-    sols_13(3,:) = [q3(1)        q3(1)      q3(2)      q3(2)      q3(1)      q3(1)      q3(2)      q3(2)];
+    sols_13(3,:) = [     q3(1)      q3(1)      q3(2)      q3(2)      q3(1)      q3(1)      q3(2)      q3(2)];
     
     %% Primer verificacion posicion muñeca
     disp('Verificación centro de muñeca :')
