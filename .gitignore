@@ -1,0 +1,10 @@
+.vs/
+libros/
+trabajo final/
+# Archivos CAD / pesados
+*.SLDASM
+*.sldasm
+*.STL
+*.stl
+*.zip
+*.par
