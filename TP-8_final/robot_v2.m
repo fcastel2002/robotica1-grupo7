@@ -1,9 +1,8 @@
-%Trabajo practico N° 3: definición del robot
 
 %definimos matriz DH
 
 % dh = [tita d a alfa sigma]
-
+dbstop if error;
 dh = [ 0    0.290   0       -pi/2   0;
        0    0       0.270   0      0;
        0    0       0.070  -pi/2   0;
@@ -11,10 +10,16 @@ dh = [ 0    0.290   0       -pi/2   0;
        0    0       0      -pi/2   0;
        0    0.072   0       0      0 ];
 
+scriptDir = fileparts(mfilename('fullpath'));
+modelPath = fullfile(scriptDir, 'IRB120_STL');
+assert(isfolder(modelPath), 'Carpeta IRB120_STL no encontrada: %s', modelPath);
+
 
 
 R1 = SerialLink(dh,'name','ABB IRB120 SC #1');
 R2 = SerialLink(dh, 'name', 'ABB IRB120 SC #2');
+
+
 R1.qlim = deg2rad([ -165  165;
                     -110  110;
                     -110   70;
@@ -33,4 +38,3 @@ limx = 2;
 limy = 2;
 limz = 1.3;
 workspace = [-limx limx -limy limy 0 limz];
-

@@ -1,5 +1,11 @@
-clear; clc;
+clear all;
+close all;
+clc;
 run ('robot_v2.m')
+%% OPCIONES DE DEBUG
+modelSTL = true;
+
+%%
 
 %% 0) Parámetros de animación
 TF = 0.5;     % [s] por segmento
@@ -39,7 +45,7 @@ plist_R1 = {
     %% ROBOT CAFETERO R2
 plist_R2 = {
     struct('pose',[0.499   0  0.6     0  pi/1.5         0],'tipo',''),
-    struct('pose',[0.05,  0.45-0.15 0.3     0   -pi/2      -pi/2],'tipo','articular'),
+    struct('pose',[0.05,  0.45-0.15 0.5     0   -pi/2      -pi/2],'tipo','articular'),
     struct('pose',[0.45   0.45-0.15  0.33     0  -pi/2   -pi/2],'tipo','cartesiana'),
     struct('pose',[0.45   0.45-0.15  0.4     0  -pi/2    -pi/2],'tipo','articular'),
     % encastre cafe en cafetera
@@ -87,11 +93,23 @@ for k = 1:numel(Tlist_R2)
 end
 %% 3) Inicializar visualización
 figure(10); clf;
-R1.plot(qseq_R1(:,1)','workspace', workspace, 'scale',1, 'jointdiam',1.4,'nowrist','notiles');
-hold on;
-R2.plot(qseq_R1(:,1)','workspace', workspace, 'scale',1, 'jointdiam',1.4,'nowrist','notiles'); 
 
-grid on;
+if(modelSTL)
+    R1.plot3d(qseq_R1(:,1)', ...
+        'workspace', workspace, ...
+        'notiles', ...
+        'path', modelPath);
+    hold on;
+    R2.plot3d(qseq_R2(:,1)','workspace', workspace, 'notiles', 'path',modelPath);
+    view(135, 25);
+    camtarget([0 0 0]);
+    camva(8); % ángulo de vista razonable
+    grid on;
+else
+    R1.plot(qseq_R1(:,1)','workspace', workspace, 'scale',1, 'jointdiam',1.4,'nowrist','notiles');
+    hold on;
+    R2.plot(qseq_R1(:,1)','workspace', workspace, 'scale',1, 'jointdiam',1.4,'nowrist','notiles');
+end
 trplot(R1.base, 'frame', R1.name, 'color', 'k', 'length', 0.5,'width',0.5,'rgb','arrow');
 trplot(R2.base, 'frame', R2.name, 'color', 'k', 'length', 0.5,'width',0.5,'rgb','arrow');
 
