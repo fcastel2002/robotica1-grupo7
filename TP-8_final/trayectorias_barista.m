@@ -38,9 +38,9 @@ plist_R1 = {
     %   4. Baja la jarra para sacarla de la lanceta
     struct('pose',[0.4      -0.6      0.33    0   pi/2    -pi/2],'tipo','articular'),
     %   5. Lleva jarra sobre taza con cafe
-    struct('pose', [0.490+0.09,      0,     0.55,  0, pi/2-0.01, 0], 'tipo', 'cartesiana'),
+    struct('pose', [0.499,      0,     0.55,  0, pi/2-0.01, 0], 'tipo', 'cartesiana'),
     %   6. Vuelca la leche sobre el cafe
-    struct('pose', [0.490+0.09, 0,     0.55,  0.01, pi/2+0.5, 0], 'tipo', 'cartesiana'),
+    struct('pose', [0.499, 0,     0.55,  0.01, pi/2+0.5, 0], 'tipo', 'cartesiana'),
 };
     
     %% ROBOT CAFETERO R2
