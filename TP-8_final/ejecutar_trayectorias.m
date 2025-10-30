@@ -33,7 +33,8 @@ for k = 2:numel(plist) % el segundo punto es el primer "destino"
                 if ~isempty(h_frame), delete(h_frame); end
 
                 T_tcp = R.fkine(qt(i,:));
-                h_frame = trplot(T_tcp, 'frame', 'TCP', 'color', 'b', 'length', 0.2,'width',0.2,'arrow');
+                %Se saco TCP de ''
+                h_frame = trplot(T_tcp, 'frame', '', 'color', 'b', 'length', 0.2,'width',0.2,'arrow');
                 setappdata(fig,'h_tcp_frame', h_frame);
                 drawnow;
             end
@@ -54,7 +55,8 @@ for k = 2:numel(plist) % el segundo punto es el primer "destino"
                 q_intermedio = q_next;  
                 q_tray_cart(i,:) = q_next';
                 if ~isempty(h_frame), delete(h_frame); end
-                h_frame = trplot(Ts(i), 'frame', 'TCP', 'color', 'g', 'length', 0.2,'width',0.2);
+                %Se saco TCP de ''
+                h_frame = trplot(Ts(i), 'frame', '', 'color', 'g', 'length', 0.2,'width',0.2);
                 setappdata(fig,'h_tcp_frame', h_frame);
                 drawnow;
             end

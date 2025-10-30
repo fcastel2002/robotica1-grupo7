@@ -12,12 +12,15 @@ dh = [ 0    0.290   0       -pi/2   0;
 
 scriptDir = fileparts(mfilename('fullpath'));
 modelPath = fullfile(scriptDir, 'IRB120_STL');
-assert(isfolder(modelPath), 'Carpeta IRB120_STL no encontrada: %s', modelPath);
+%assert(isfolder(modelPath), 'Carpeta IRB120_STL no encontrada: %s', modelPath);
 
 
 
-R1 = SerialLink(dh,'name','ABB IRB120 SC #1');
-R2 = SerialLink(dh, 'name', 'ABB IRB120 SC #2');
+%R1 = SerialLink(dh,'name','ABB IRB120 SC #1');
+%R2 = SerialLink(dh, 'name', 'ABB IRB120 SC #2');
+
+R1 = SerialLink(dh,'name','Leche');
+R2 = SerialLink(dh, 'name', 'Cafe');
 
 
 R1.qlim = deg2rad([ -165  165;
