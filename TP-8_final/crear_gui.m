@@ -39,12 +39,12 @@ if ~isempty(groups)
         y = y - dy;
     end
 else
-    for k = 2:numel(plist{1})
-        txt = sprintf('Punto %d → %d', k-1, k);
-        uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
-            'Position',[x y w h], 'String',txt, 'FontSize',10, ...
-            'Callback', @(~,~) ejecutar_tramo(k,R(1),plist{1},Tlist{1},qseq{1}));
-        y = y - dy;
+for k = 2:numel(plist{1})
+    txt = sprintf('Punto %d → %d', k-1, k);
+    uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
+        'Position',[x y w h], 'String',txt, 'FontSize',10, ...
+        'Callback', @(~,~) ejecutar_tramo(k,R(1),plist{1},Tlist{1},qseq{1}));
+    y = y - dy;
     end
 end
 
@@ -69,12 +69,12 @@ if ~isempty(groups)
         y = y - dy;
     end
 else
-    for k = 2:numel(plist{2})
-        txt = sprintf('Punto R2 %d → %d', k-1, k);
-        uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
-            'Position',[x y w h], 'String',txt, 'FontSize',10, ...
-            'Callback', @(~,~) ejecutar_tramo(k,R(2),plist{2},Tlist{2},qseq{2}));
-        y = y - dy;
+for k = 2:numel(plist{2})
+    txt = sprintf('Punto R2 %d → %d', k-1, k);
+    uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
+        'Position',[x y w h], 'String',txt, 'FontSize',10, ...
+        'Callback', @(~,~) ejecutar_tramo(k,R(2),plist{2},Tlist{2},qseq{2}));
+    y = y - dy;
     end
 end
 
@@ -132,6 +132,6 @@ end
         qseq_sub  = qseq(:, idxs);
         ejecutar_trayectorias(R, plist_sub, Tlist_sub, qseq_sub, n, N);
     end
-    
+
 
 end

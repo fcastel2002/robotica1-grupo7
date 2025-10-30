@@ -40,6 +40,8 @@ function arte_latte_corazon(R, centro_base_xyz, rpy_fijo)
     hold on; grid on;
 
     % IK + animación (convertir a marco MUNDO usando R.base)
+    % Trazo de la trayectoria del TCP (sólo para arte latte)
+    htrail = animatedline('Color',[0.8 0 0], 'LineWidth', 2); % rojo vino
     try
         q_anterior = R.getpos()';
     catch
@@ -51,6 +53,10 @@ function arte_latte_corazon(R, centro_base_xyz, rpy_fijo)
         T_k = R.base.double * T_base;
         q_next = ik_barista(R, T_k, q_anterior, true);
         R.animate(q_next');
+        % Agregar punto del TCP en mundo al trazo
+        T_tcp = R.fkine(q_next');
+        p = T_tcp.t;
+        addpoints(htrail, p(1), p(2), p(3));
         q_anterior = q_next;
         drawnow;
     end
