@@ -26,8 +26,6 @@ N  = 20;      % puntos de interpolación cartesiana
 
 %% TRAYECTORIAS
     %% ROBOT LECHE R1 
-
-
 plist_R1 = {
     %   0. Reposo
     struct('pose',[0.490+0.09    0           0.6     0   pi/1.5   0],'tipo',''),
