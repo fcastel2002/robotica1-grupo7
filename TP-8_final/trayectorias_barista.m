@@ -145,4 +145,16 @@ for k = 1:numel(Tlist_R2)
     plot3(pos(1), pos(2), pos(3), 'ro', 'MarkerSize', 3, 'MarkerFaceColor', 'g');
     %text(pos(1), pos(2), pos(3), sprintf('  P%d', k), 'FontSize', 10, 'Color', 'b');
 end
-crear_gui([R1 R2], {plist_R1 plist_R2}, {Tlist_R1 Tlist_R2}, {qseq_R1 qseq_R2}, n, N);
+% Definir grupos de trayectos (índices en plist) por pasos principales
+groups_R1 = { [1 2], [2 3], [3 4], [4 5], [5 6], [6 7] };
+groups_R2 = { [1 2], [2 3 4 5], [5 6], [6 7 8], [7 8 9], [9 10 11], [11 12], [12 13] };
+
+crear_gui([R1 R2], {plist_R1 plist_R2}, {Tlist_R1 Tlist_R2}, {qseq_R1 qseq_R2}, n, N, {groups_R1, groups_R2});
+
+% Botón adicional: Arte latte (corazón) para R1
+fig = gcf;
+x = 0.85; w = 0.12; h = 0.06; y = 0.72; % debajo del botón "Ejecutar TODO"
+uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
+    'Position',[x y w h], 'String','Arte latte (corazón)', ...
+    'FontSize',11, ...
+    'Callback', @(~,~) arte_latte_corazon(R1, [0.499 0 0.55], [0.01 pi/2+0.5 0]));
