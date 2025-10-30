@@ -14,7 +14,7 @@ function arte_latte_corazon(R, centro_base_xyz, rpy_fijo)
     N_puntos = 50;       % hitos de forma
     escala   = 0.003;    % ~6 cm de tamaño
     dt       = 0.05;     % 50 ms
-    v_max    = 0.10;     % m/s y rad/s (equivalente)
+    v_max    = 0.50;     % m/s y rad/s (equivalente)
     t_blend  = 0.10;     % s
 
     % Corazón paramétrico 2D en marco BASE (XY), comenzando en el centro
