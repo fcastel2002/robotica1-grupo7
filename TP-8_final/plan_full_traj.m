@@ -1,4 +1,4 @@
-function [Q, dt] = plan_full_traj(R, plist, Tlist, qseq, n, N, include_arte)
+function [Q, dt, seg_bounds] = plan_full_traj(R, plist, Tlist, qseq, n, N, include_arte)
 % PLAN_FULL_TRAJ Precalcula trayectoria articular completa para un robot.
 % [Q, dt] = plan_full_traj(R, plist, Tlist, qseq, n, N, include_arte)
 % - Devuelve Q [K x 6] con poses articulares y dt (sugerido 0.05s)
@@ -7,6 +7,7 @@ if nargin < 7, include_arte = false; end
 dt = 0.05;
 
 Q = [];
+seg_bounds = struct('ends', [], 'labels', {{} });
 q_curr = qseq(:,1)';
 
 for k = 2:numel(plist)
@@ -16,6 +17,8 @@ for k = 2:numel(plist)
             [qt, ~, ~] = jtraj(q_curr, qseq(:,k)', n);
             Q = [Q; qt]; %#ok<AGROW>
             q_curr = qt(end,:);
+            seg_bounds.ends(end+1) = size(Q,1); %#ok<AGROW>
+            seg_bounds.labels{end+1} = sprintf('art %d->%d', k-1, k); %#ok<AGROW>
         case 'cartesiana'
             T_start = R.fkine(q_curr);
             T_end   = SE3(Tlist{k});
@@ -29,6 +32,8 @@ for k = 2:numel(plist)
             end
             Q = [Q; qt_seg]; %#ok<AGROW>
             q_curr = qt_seg(end,:);
+            seg_bounds.ends(end+1) = size(Q,1); %#ok<AGROW>
+            seg_bounds.labels{end+1} = sprintf('cart %d->%d', k-1, k); %#ok<AGROW>
         otherwise
             % ignorar
     end
@@ -58,6 +63,8 @@ if include_arte
         Q = [Q; q_next']; %#ok<AGROW>
         q_seed = q_next;
     end
+    seg_bounds.ends(end+1) = size(Q,1);
+    seg_bounds.labels{end+1} = 'arte latte';
 end
 
 end

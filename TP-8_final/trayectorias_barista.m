@@ -10,7 +10,7 @@ modelSTL = false;
 %% 0) Parámetros de animación
 TF = 0.3;     % [s] por segmento
 n  = 10;      % muestras por segmento (suavidad)
-N  = 20;      % puntos de interpolación cartesiana
+N  = 20;      % puntos de interpolación cartesiana6
 
 %% ACLARACIONES
 % Para tener en cuenta, la mesa donde se encuentra la cafetera, moledora de
@@ -41,8 +41,6 @@ plist_R1 = {
     struct('pose', [0.490+0.09,      0,     0.55,  0, pi/2-0.01, 0], 'tipo', 'cartesiana'),
     %   6. Vuelca la leche sobre el cafe
     struct('pose', [0.490+0.09, 0,     0.55,  0.01, pi/2+0.5, 0], 'tipo', 'cartesiana'),
-    % falta el arte latte pero buscaremos una herramienta de generacion de
-    % trayectorias mas visual y prácica.
 };
     
     %% ROBOT CAFETERO R2
