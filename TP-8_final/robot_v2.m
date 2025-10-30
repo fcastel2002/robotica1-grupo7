@@ -29,6 +29,7 @@ R1.qlim = deg2rad([ -165  165;
                     -160  160;
                     -120  120;
                     -400  400 ]);
+
 R2.qlim = R1.qlim;
 R1.base = transl(0.490+0.09,0,0)*trotz(pi); % la medida de separcion de 980mm divido/2 sumado el radio de la base.
 R2.base = transl(-0.490-0.09,0.15,0);
