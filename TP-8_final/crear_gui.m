@@ -19,6 +19,13 @@ uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
     'FontSize',11, ...
     'Callback', @(~,~) ejecutar_todo_r1(R(1), plist{1}, Tlist{1}, qseq{1}, n, N));
 
+% Botón "Ambos (sync)"
+y_sync = y0 - dy/2; % un poco debajo
+uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
+    'Position',[0.45 y_sync 0.18 h], 'String','Ejecutar Ambos (sync)', ...
+    'FontSize',11, ...
+    'Callback', @(~,~) ejecutar_ambos_sync(R, plist, Tlist, qseq, n, N));
+
 % Botones agrupados o por segmento
 y = y0 - dy;
 if ~isempty(groups)
@@ -88,6 +95,34 @@ end
             arte_latte_corazon(R, [0.499 0 0.55], [0.01 pi/2+0.5 0]);
         catch ME
             warning('Fallo al ejecutar arte latte: %s', ME.message);
+        end
+    end
+    function ejecutar_ambos_sync(R_all, plist_all, Tlist_all, qseq_all, n, N)
+        % Precalcula ambas trayectorias completas y anima en paralelo.
+        R1 = R_all(1); R2 = R_all(2);
+        plist_R1 = plist_all{1}; Tlist_R1 = Tlist_all{1}; qseq_R1 = qseq_all{1};
+        plist_R2 = plist_all{2}; Tlist_R2 = Tlist_all{2}; qseq_R2 = qseq_all{2};
+
+        % 1) Plan completo R2
+        [Q2, dt] = plan_full_traj(R2, plist_R2, Tlist_R2, qseq_R2, n, N, false);
+
+        % 2) R1: PRE (hasta antes de 4->5) y POST (4->5, 5->6 + arte)
+        idx_pre_fin = 4; % ejecutar hasta el punto 4 inclusive
+        [Q1_pre, ~]  = plan_full_traj(R1, plist_R1(1:idx_pre_fin), Tlist_R1(1:idx_pre_fin), qseq_R1(:,1:idx_pre_fin), n, N, false);
+        [Q1_post, ~] = plan_full_traj(R1, plist_R1(4:6), Tlist_R1(4:6), qseq_R1(:,4:6), n, N, true);
+
+        % 3) Sincronía: R1 espera a que R2 termine
+        wait_len = max(size(Q2,1) - size(Q1_pre,1), 0);
+        pad = repmat(Q1_pre(end,:), wait_len, 1);
+        Q1_sync = [Q1_pre; pad; Q1_post];
+
+        % 4) Animación simultánea
+        K = max(size(Q1_sync,1), size(Q2,1));
+        for k = 1:K
+            if k <= size(Q2,1), R2.animate(Q2(k,:)); end
+            if k <= size(Q1_sync,1), R1.animate(Q1_sync(k,:)); end
+            drawnow;
+            pause(dt);
         end
     end
     function ejecutar_grupo(R, plist, Tlist, qseq, idxs)
