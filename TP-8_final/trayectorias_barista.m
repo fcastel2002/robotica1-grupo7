@@ -3,7 +3,7 @@ close all;
 clc;
 run ('robot_v2.m')
 %% OPCIONES DE DEBUG
-modelSTL = false;
+modelSTL = true;
 
 %%
 
@@ -115,7 +115,7 @@ if(modelSTL)
         'notiles', ...
         'path', modelPath);
     hold on;
-    R2.plot3d(qseq_R2(:,1)','workspace', workspace, 'notiles', 'path',modelPath);
+    R2.plot3d(qseq_R2(:,1)','workspace', workspace, 'notiles', 'path',modelPath2);
     view(135, 25);
     camtarget([0 0 0]);
     camva(8); % ángulo de vista razonable
@@ -125,8 +125,8 @@ else
     hold on;
     R2.plot(qseq_R1(:,1)','workspace', workspace, 'scale',1, 'jointdiam',1.4,'nowrist','notiles');
 end
-%trplot(R1.base, 'frame', R1.name, 'color', 'k', 'length', 0.5,'width',0.5,'rgb','arrow');
-%trplot(R2.base, 'frame', R2.name, 'color', 'k', 'length', 0.5,'width',0.5,'rgb','arrow');
+trplot(R1.base, 'frame', R1.name, 'color', 'k', 'length', 0.5,'width',0.5,'rgb','arrow');
+trplot(R2.base, 'frame', R2.name, 'color', 'k', 'length', 0.5,'width',0.5,'rgb','arrow');
 
 title('Robots Cooperativos Baristas');
 

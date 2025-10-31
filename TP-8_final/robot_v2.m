@@ -11,7 +11,9 @@ dh = [ 0    0.290   0       -pi/2   0;
        0    0.072   0       0      0 ];
 
 scriptDir = fileparts(mfilename('fullpath'));
-modelPath = fullfile(scriptDir, 'IRB120_STL');
+modelPath = fullfile(scriptDir, 'IRB120_STL_1');
+modelPath2 = fullfile(scriptDir, 'IRB120_STL_2');
+
 %assert(isfolder(modelPath), 'Carpeta IRB120_STL no encontrada: %s', modelPath);
 
 
