@@ -17,10 +17,16 @@ if ~isempty(h_ant) && isgraphics(h_ant)
 end
 h_frame = [];
 
+% Acumular trayectorias completas para gráficos finales
+Q_completo = [];
+Qd_completo = [];
+seg_bounds = [];
+dt_seg = 0.05;  % dt aproximado por muestra
+
 for k = 2:numel(plist) % el segundo punto es el primer "destino"
     tipo_movimiento = plist{k}.tipo;
 
-    fprintf('Moviendo de waypoint %d → %d (pausa de %f segundos)\n', k-1, k,tf);
+    fprintf('Moviendo de waypoint %d → %d (pausa de %f segundos)\n', k-1, k, TF);
 
     switch tipo_movimiento
         
@@ -39,8 +45,13 @@ for k = 2:numel(plist) % el segundo punto es el primer "destino"
                 drawnow;
             end
             
+            % Acumular trayectoria
+            Q_completo = [Q_completo; qt];
+            Qd_completo = [Qd_completo; qd];
+            seg_bounds(end+1) = size(Q_completo,1); %#ok<AGROW>
+            
             t_articular = 1:n; %tiempo articular
-            graficar_perfiles(t_articular,qt, qd, 'Articular');
+            % No graficar aquí, se hará al final
 
         case 'cartesiana'
             T_start = R.fkine(q_curr);
@@ -61,9 +72,15 @@ for k = 2:numel(plist) % el segundo punto es el primer "destino"
                 drawnow;
             end
             qd_tray_cart = diff(q_tray_cart)*N;
-            q_tray_plot = q_tray_cart(1:end-1, :);
-            t_cartesiano = 1:(N-1);
-            graficar_perfiles(t_cartesiano, q_tray_plot, qd_tray_cart, 'Cartesiana');
+            % Agregar última fila de velocidades (cero)
+            qd_tray_cart = [qd_tray_cart; zeros(1, size(q_tray_cart,2))];
+            
+            % Acumular trayectoria
+            Q_completo = [Q_completo; q_tray_cart];
+            Qd_completo = [Qd_completo; qd_tray_cart];
+            seg_bounds(end+1) = size(Q_completo,1); %#ok<AGROW>
+            
+            % No graficar aquí, se hará al final
         otherwise
             warning('Tipo de movimiento "%s" no reconocido. Saltando segmento.', tipo_movimiento);
     end
@@ -71,5 +88,44 @@ for k = 2:numel(plist) % el segundo punto es el primer "destino"
     pause(0.5);
     q_curr = qseq(:,k);
 end
+
+% Graficar trayectorias completas en ventanas nuevas
+if ~isempty(Q_completo)
+    robot_name = R.name;
+    
+    colors = lines(6);
+    labels = arrayfun(@(i) sprintf('q%d',i), 1:6, 'UniformOutput', false);
+    
+    % Ventana 1: Posiciones (nueva ventana sin número específico)
+    fig1 = figure();
+    set(fig1, 'Name', sprintf('%s - Posiciones', robot_name));
+    hold on; grid on;
+    for i=1:6
+        plot(Q_completo(:,i), 'Color', colors(i,:), 'LineWidth',1.2);
+    end
+    legend(labels{:}, 'Location','best');
+    title(sprintf('%s - q1..q6', robot_name));
+    xlabel('muestra'); ylabel('rad');
+    % Marcar límites de segmentos
+    for i=1:numel(seg_bounds)
+        xline(seg_bounds(i), 'r--', 'HandleVisibility','off');
+    end
+    
+    % Ventana 2: Velocidades (nueva ventana sin número específico)
+    fig2 = figure();
+    set(fig2, 'Name', sprintf('%s - Velocidades', robot_name));
+    hold on; grid on;
+    for i=1:6
+        plot(Qd_completo(:,i), 'Color', colors(i,:), 'LineWidth',1.2);
+    end
+    legend(labels{:}, 'Location','best');
+    title(sprintf('%s - dq1..dq6', robot_name));
+    xlabel('muestra'); ylabel('rad/s');
+    % Marcar límites de segmentos
+    for i=1:numel(seg_bounds)
+        xline(seg_bounds(i), 'r--', 'HandleVisibility','off');
+    end
+end
+
 disp('Trayectoria completada ');
 end

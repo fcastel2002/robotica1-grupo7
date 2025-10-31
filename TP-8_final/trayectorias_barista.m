@@ -38,9 +38,9 @@ plist_R1 = {
     %   4. Baja la jarra para sacarla de la lanceta
     struct('pose',[0.4      -0.6      0.33    0   pi/2    -pi/2],'tipo','articular'),
     %   5. Lleva jarra sobre taza con cafe
-    struct('pose', [0.490+0.09,      0,     0.55,  0, pi/2-0.01, 0], 'tipo', 'cartesiana'),
+    struct('pose', [0.499,      0,     0.55,  0, pi/2-0.01, 0], 'tipo', 'cartesiana'),
     %   6. Vuelca la leche sobre el cafe
-    struct('pose', [0.490+0.09, 0,     0.55,  0.01, pi/2+0.5, 0], 'tipo', 'cartesiana'),
+    struct('pose', [0.499, 0,     0.55,  0.01, pi/2+0.5, 0], 'tipo', 'cartesiana'),
 };
     
     %% ROBOT CAFETERO R2
@@ -51,13 +51,13 @@ plist_R2 = {
     %   0. Reposo
     struct('pose',[0.490+0.09   0    0.6     0   pi/1.5         0],'tipo',''),
     %   1. Recoge portafiltro (de maquina molino de cafe)
-    struct('pose',[-0.2,  0.6   0.3     0   -pi/2      -pi/2],'tipo','articular'),
+    struct('pose',[-0.2,  0.6   0.3     0.01   -pi/2+0.01      -pi/2+0.01],'tipo','articular'),
     %       1.2. Trayectoria
-    struct('pose',[-0.2,  0.5  0.3     0   -pi/2      -pi/2],'tipo','cartesiana'),
+    struct('pose',[-0.2,  0.5  0.3     0.01   -pi/2+0.01      -pi/2+0.01],'tipo','cartesiana'),
     %       1.3. Trayectoria
-    struct('pose',[0.25,  0.5  0.4     0   -pi/2      -pi/2],'tipo','cartesiana'),
+    struct('pose',[0.25,  0.5  0.4     0.01   -pi/2+0.01      -pi/2+0.01],'tipo','cartesiana'),
     %   2. Lleva portafiltro a cafetera 
-    struct('pose',[0.25   0.6   0.4     0  -pi/2   -pi/2],'tipo','cartesiana'),
+    struct('pose',[0.25   0.6   0.4     0.01  -pi/2+0.01   -pi/2],'tipo','cartesiana'),
     %   3. Introduce Portafiltro a Cafetera (sube 7cm)
     struct('pose',[0.25   0.6   0.45    0  -pi/2    -pi/2],'tipo','cartesiana'),
     %   4. Encastra Portafiltro (gira 30°)

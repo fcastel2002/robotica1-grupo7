@@ -117,9 +117,18 @@ end
         seg1_pre.labels = [seg12.labels, seg23.labels, seg34.labels, seg45.labels];
         % POST = (5->6) + arte latte (armado explícito)
         [Q56, ~, seg56] = plan_full_traj(R1, plist_R1(6:7), Tlist_R1(6:7), qseq_R1(:,6:7), n, N, false); % 5->6
-        [Q_arte, ~]     = plan_arte_latte_q(R1, [0.499 0 0.55], [0.01 pi/2+0.5 0]);
-        Q1_post = [Q56; Q_arte];
-        seg1_post.ends = [seg56.ends, size(Q56,1) + size(Q_arte,1)];
+        % Calcular centro y orientación en BASE al final del punto 6
+        Tw_end6 = R1.fkine(Q56(end,:));
+        % Convertir de mundo a BASE: T_base = inv(R1.base) * T_mundo
+        T_base_inv = SE3(R1.base.double).inv();
+        T_end6 = T_base_inv.double * Tw_end6.double;
+        centro_end6 = T_end6(1:3,4)';
+        rpy_end6 = tr2rpy(T_end6, 'zyx');
+        [Q_arte_temp, ~] = plan_arte_latte_q(R1, centro_end6, rpy_end6);
+        % Asegurar que el primer punto de arte latte sea exactamente Q56(end,:) para continuidad perfecta
+        Q_arte = [Q56(end,:); Q_arte_temp(2:end,:)];
+        Q1_post = [Q56; Q_arte(2:end,:)];  % Evitar duplicar el punto final de Q56
+        seg1_post.ends = [seg56.ends, size(Q56,1) + size(Q_arte,1) - 1];  % -1 porque no duplicamos
         seg1_post.labels = [seg56.labels, {'arte latte'}];
 
         % 3) Sincronía: R1 espera a que R2 termine
@@ -138,17 +147,9 @@ end
 
         % 4) Animación simultánea (con trazo durante arte latte)
         % Calcular inicio global del arte latte dentro de Q1_sync
-        idxArte = find(strcmp(seg1_post.labels,'arte latte'),1,'first');
-        if isempty(idxArte)
-            arte_start_global = inf; % no hay arte
-        else
-            if idxArte == 1
-                arte_start_post = 1;
-            else
-                arte_start_post = seg1_post.ends(idxArte-1) + 1;
-            end
-            arte_start_global = size(Q1_pre,1) + wait_len + size(qblend,1) + arte_start_post;
-        end
+        % Q1_post = [Q56; Q_arte(2:end,:)], así que el arte empieza justo después de Q56
+        arte_start_post = size(Q56,1) + 1;  % Primer punto de Q_arte dentro de Q1_post (después de duplicado)
+        arte_start_global = size(Q1_pre,1) + wait_len + size(qblend,1) + arte_start_post;
 
         htrail = []; % animated line para arte latte
         K = max(size(Q1_sync,1), size(Q2,1));
