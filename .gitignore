@@ -4,8 +4,13 @@ trabajo final/
 
 # Archivos CAD / pesados
 *.SLDASM
+*.ASM
 *.sldasm
 *.STL
 *.stl
 *.zip
 *.par
+*.step
+
+!TP-8_final/IRB_STL_1/*.stl
+!TP-8_final/IRB_STL_2/*.stl
