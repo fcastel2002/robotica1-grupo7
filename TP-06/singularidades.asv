@@ -3,20 +3,11 @@ run irb120_sym_data.m
 
 % Creamos un robot a partir de la matriz DH simbólica completa de nuestro
 % robot de 6 gdl.
-R1_brazo = SerialLink(R1.links(1:4), 'name','brazoBarista');
-symq_brazo = symq(1:4);
-% Jacobiano referido al frame 6
-J_wrist = R1.jacobe(symq);
+R1_brazo = SerialLink(R1.links(1:3), 'name','brazoBarista');
+symq_brazo = symq(1:3);
 J_brazo = R1_brazo.jacob0(symq_brazo);
-% Solo orientacion de la muñeca
-Jorient_wrist = J_wrist(4:6,4:6);
 % Tomamos solo la parte lineal
-
 Jv_brazo = J_brazo(1:3,1:3); 
-% determinante de jacobiano muñeca
-detJ_wrist = det(Jorient_wrist);
-detJ_wrist = simplify(detJ_wrist);
-
 % responderemos a la pregunta de bajo que qué condiciones las
 % articulaciones pierden la capacidad de mover el centro de la muñeca
 % luego la muñeca se encarga de orientar el efector final
@@ -24,13 +15,13 @@ detJ_brazo = det(Jv_brazo);
 detJ_brazo = expand(detJ_brazo);
 detJ_brazo = simplify(detJ_brazo);
 detJ_brazo_fact = simplify(factor(detJ_brazo));
-detJ_brazo_fact2 = factor(detJ_brazo_fact(2));
-disp("---------------------------------------------------------")
 
+disp("---------------------------------------------------------")
 disp("Determinante del Jacobiano del Brazo:")
 disp(detJ_brazo_fact(2))
-disp("Determinante del Jacobiano de muñeca:")
-disp(detJ_wrist);
-
+disp("Singularidades: " + ...
+    "1- Codo extendido, q3=0 o q3= para todo q2")
+disp(subs(detJ_brazo_fact(2),symq(3),0))
+disp("2- ")
 
 disp("---------------------------------------------------------")
