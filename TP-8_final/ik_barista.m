@@ -130,7 +130,7 @@ function [q4,q5,q6] = calcular_orient(R, q1,q2,q3, T,q0)
     T2 = R.links(2).A(q2).double;
     T3 = R.links(3).A(q3).double;
     T36 = invHomog(T3) * invHomog(T2) * invHomog(T1) * T; %dato del problema
-    disp(T36(3,3));
+    % disp(T36(3,3));  % Comentado para evitar salida en command window
     % caso degenerado
     if(abs(abs(T36(3,3)-1))<20e-4)
         % asumimos q4 igual al anterior para resolver las infinitas
