@@ -55,48 +55,14 @@ plist_R2 = {
     %   1.2. Trayectoria (Inicio)
     struct('pose',[-0.2,  0.5, 0.3, 0.01, -pi/2+0.01, -pi/2+0.01],'tipo','cartesiana'),
 
-    % PUNTOS INTERMEDIOS PARA EVITAR SINGULARIDAD (1.2 -> 1.3) - OPCIÓN 2
-    % Estrategia: Movimiento en arco "por detrás" cambiando Y para evitar singularidad
-    
-    % 1.2a: Subir y desplazarse hacia atrás (Y negativo)
-    struct('pose',[-0.2,  0.4, 0.45, 0.05, -pi/2+0.1, -pi/2+0.01],'tipo','cartesiana'),
-    
-    % 1.2b: Continuar subiendo con desplazamiento
-    struct('pose',[-0.2,  0.35, 0.55, 0.08, -pi/2+0.15, -pi/2+0.01],'tipo','cartesiana'),
-    
-    % 1.2c: Subir más y volver hacia la posición original en Y
-    struct('pose',[-0.2,  0.4, 0.65, 0.05, -pi/2+0.1, -pi/2+0.01],'tipo','cartesiana'),
-    
-    % 1.2d: Volver a Y=0.5 mientras subimos
-    struct('pose',[-0.2,  0.48, 0.68, 0.02, -pi/2+0.05, -pi/2+0.01],'tipo','cartesiana'),
-
     %   1.3. (NUEVO) Mover Z-UP (Retirada)
     %      (Misma X,Y, misma Orientación, solo Z más alto)
     struct('pose',[-0.2,  0.5, 0.7, 0.01, -pi/2+0.01, -pi/2+0.01],'tipo','cartesiana'),
 
-    % SOLUCIÓN: Trayectoria curva dentro del alcance del robot
-    % Estrategia: Crear una curva moderada que suba un poco Z y aumente Y moderadamente
-    % manteniendo todos los puntos dentro del alcance del robot. PITCH constante.
-    
-    % 1.3a: Empezar curva: subir Z moderadamente, aumentar Y poco
-    struct('pose',[-0.2,  0.52, 0.72, 0.01, -pi/2+0.01, -pi/2+0.01],'tipo','cartesiana'),
-    
-    % 1.3b: Continuar curva: avanzar en X, Y un poco más alto, Z un poco más alto
-    struct('pose',[-0.1,  0.54, 0.74, 0.01, -pi/2+0.01, -pi/2+0.01],'tipo','cartesiana'),
-    
-    % 1.3c: Punto medio de la curva: X intermedio, Y máximo moderado, Z máximo moderado
-    struct('pose',[0.05,  0.55, 0.75, 0.01, -pi/2+0.01, -pi/2+0.01],'tipo','cartesiana'),
-    
-    % 1.3d: Continuar curva: avanzar más en X, empezar a reducir Y, mantener Z moderado
-    struct('pose',[0.15,  0.54, 0.74, 0.01, -pi/2+0.01, -pi/2+0.01],'tipo','cartesiana'),
-    
-    % 1.3e: Casi en posición final: X casi final, Y reduciendo, Z bajando gradualmente
-    struct('pose',[0.22,  0.52, 0.72, 0.01, -pi/2+0.01, -pi/2+0.01],'tipo','cartesiana'),
-
     %   1.4. (NUEVO) Mover XY-ACROSS (Viaje)
     %      (Nueva X,Y, pero Z se mantiene ALTO)
-    %      PITCH se mantiene constante para no volcar el café
-    struct('pose',[0.25,  0.5, 0.7, 0.01, -pi/2+0.01,  -pi/2+0.01],'tipo','cartesiana'),
+    %      (¡Y usamos tu "desvío" de pitch para evitar la singularidad de q5!)
+    struct('pose',[0.25,  0.5, 0.7, 0.01, -pi/2+0.1,  -pi/2+0.01],'tipo','cartesiana'),
 
     %   1.5. (NUEVO) Mover Z-DOWN (Aproximación)
     %      (X,Y final, Z final, Orientación final)
@@ -190,12 +156,7 @@ for k = 1:numel(Tlist_R2)
 end
 % Definir grupos de trayectos (índices en plist) por pasos principales
 groups_R1 = { [1 2], [2 3], [3 4], [4 5], [5 6], [6 7] };
-% groups_R2 actualizado con SOLUCIÓN CURVA (bajar Z y aumentar Y moderadamente):
-% - OPCIÓN 2: 4 puntos intermedios entre 1.2 (índice 3) y 1.3 (índice 8)
-% - SOLUCIÓN CURVA: 5 puntos intermedios entre 1.3 (índice 8) y 1.4 (índice 14)
-%   Estrategia: Trayectoria curva bajando Z y aumentando Y moderadamente para rodear singularidad
-% Del punto 1 (índice 2) al punto 2 (índice 16) hay 15 trayectorias
-groups_R2 = { [1 2], [2 3 4 5 6 7 8 9 10 11 12 13 14 15 16], [16 17], [17 18], [18 19], [19 20], [20 21], [21 22], [22 23] };
+groups_R2 = { [1 2], [2 3 4 5 6 7], [7 8], [8 9 1], [9 10], [11 12 13], [13 14], [14 15] };
 
 crear_gui([R1 R2], {plist_R1 plist_R2}, {Tlist_R1 Tlist_R2}, {qseq_R1 qseq_R2}, n, N, {groups_R1, groups_R2});
 
