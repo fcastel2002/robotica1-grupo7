@@ -1,8 +1,9 @@
 clear all;
 close all;
 clc;
-run ('robot_v2.m')
+run ('robot.m')
 %% OPCIONES DE DEBUG
+% cambiar a false si no se desean ver los modelos STL
 modelSTL = true;
 
 %%
@@ -23,6 +24,9 @@ N  = 20;      % puntos de interpolación cartesiana6
 % Además por simplicidad las coordenadas se dan tomando en cuenta el cero
 % de cada robot, por eso es que luego se multiplican por R.base
 % correspondiente.
+% ROLL -> ALREDEDOR DE EJE X
+% PITCH -> ALREDEDOR DE EJE Y
+% YAW -> ALREDEDOR DE EJE Z
 
 %% TRAYECTORIAS
     %% ROBOT LECHE R1 

@@ -80,7 +80,36 @@ end
 
 
 %% helpers
+function cerrar_figuras_anteriores()
+        % Busca todas las figuras (handles raíz = 0)
+        figs = findall(0, 'Type', 'figure');
+        
+        if isempty(figs)
+            return;
+        end
+        
+        % Filtra las que tienen nombres que queremos cerrar
+        % 'ejecutar_trayectorias' crea "... - Posiciones" y "... - Velocidades"
+        % 'ejecutar_ambos_sync' crea "R1 - Posiciones", "R1 - Velocidades", etc.
+        names_to_close = {'Posiciones', 'Velocidades'};
+        
+        for i = 1:length(figs)
+            % Usamos get() para compatibilidad con versiones antiguas
+            fig_name = get(figs(i), 'Name'); 
+            if ~isempty(fig_name)
+                % Si el nombre de la figura CONTIENE cualquiera de las palabras clave
+                if any(contains(fig_name, names_to_close))
+                    % No cerrar la figura principal de la GUI por accidente
+                    if figs(i) ~= fig
+                        close(figs(i));
+                    end
+                end
+            end
+        end
+
+    end
     function ejecutar_tramo(k,R,plist,Tlist,qseq)
+        cerrar_figuras_anteriores()
         % Subconjuntos consistentes para mantener la lógica intacta
         plist_sub = plist(k-1:k);
         Tlist_sub = Tlist(k-1:k);
@@ -89,6 +118,7 @@ end
         ejecutar_trayectorias(R, plist_sub, Tlist_sub, qseq_sub, n, N);
     end
     function ejecutar_todo_r1(R, plist, Tlist, qseq, n, N)
+
         % Ejecuta todo R1 y luego el arte latte como final
         ejecutar_trayectorias(R, plist, Tlist, qseq, n, N);
         try
@@ -216,11 +246,15 @@ end
         for i=1:numel(seg2.ends), xline(seg2.ends(i),'r--'); end
     end
     function ejecutar_grupo(R, plist, Tlist, qseq, idxs)
+        cerrar_figuras_anteriores()
         % Ejecuta una lista de índices consecutivos como un bloque
         plist_sub = plist(idxs);
         Tlist_sub = Tlist(idxs);
         qseq_sub  = qseq(:, idxs);
         ejecutar_trayectorias(R, plist_sub, Tlist_sub, qseq_sub, n, N);
+        drawnow;      
+        pause(0.05);  
+        figure(fig);
     end
     function plot_q_evol(Q, dt, figTitle)
         if isempty(Q), return; end

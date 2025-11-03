@@ -22,7 +22,7 @@ function Q = filtrar_q_lim(R, qq, q0, q_mejor)
     qq_val = qq(:, inlim);
 
     if isempty(qq_val)
-        warning('No hay soluciones dentro de los límites articulares.');
+        error('No hay soluciones dentro de los límites articulares.');
         % Elegir la más cercana a q0 aunque esté fuera de rango
         [~, pos] = min(vecnorm(qq - q0, 2, 1));
         Q = qq(:, pos);

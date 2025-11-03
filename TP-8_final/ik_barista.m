@@ -90,7 +90,7 @@ function Q = ik_barista(R, T, q0, q_mejor,debug)
             end
             % p_pred = (T03 * [0;0;R.links(4).d;1]);
             % Si el origen de la muñeca está a distancia d4 a lo largo de z3:
-            T03 = T03 * R.links(4).A(0).double ;       % si el centro coincide con el origen de {3}
+            T03 = T03 * R.links(4).A(0).double;       % si el centro coincide con el origen de {3}
             fprintf('> %d:', i);
             disp(T03(1:3,4)');
         end
@@ -116,7 +116,7 @@ function Q = ik_barista(R, T, q0, q_mejor,debug)
        disp([tr2rpy(T), transl(T)'])
        for i=1:8
            Taux = R.fkine(qq(:,i));
-           fprintf('> %d:',i);
+           fprintf('> %d:',i);''
            disp([Taux.tr2rpy, Taux.transl]);
        end
    end
@@ -132,9 +132,10 @@ function [q4,q5,q6] = calcular_orient(R, q1,q2,q3, T,q0)
     T36 = invHomog(T3) * invHomog(T2) * invHomog(T1) * T; %dato del problema
     disp(T36(3,3));
     % caso degenerado
-    if(abs(T36(3,3)-1)<eps)
+    if(abs(abs(T36(3,3)-1))<20e-4)
         % asumimos q4 igual al anterior para resolver las infinitas
         % soluciones
+        disp("singularidad eje 6 y 4 alineado")
         q4(1) = q0(4); %q0 es el vector que le paso
         q5(1) = 0;
         q6(1) = atan2(T36(2,1), T36(1,1)) - q4(1);
@@ -142,6 +143,7 @@ function [q4,q5,q6] = calcular_orient(R, q1,q2,q3, T,q0)
         q5(2) = 0;
         q6(2) = q6(1);
     else
+        disp("normal")
         q4(1) = atan2(-T36(2,3), -T36(1,3));
         if q4(1) > 0
             q4(2) = q4(1) - pi;
