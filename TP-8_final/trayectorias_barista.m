@@ -106,19 +106,17 @@ plist_R2 = {
     %   3. Introduce Portafiltro a Cafetera (sube 7cm)
     struct('pose',[0.25   0.6   0.45    0  -pi/2    -pi/2],'tipo','cartesiana'),
     %   4. Encastra Portafiltro (gira 30°)
-    struct('pose',[0.25   0.6   0.45    0  -pi/2    -pi/2-pi/6],'tipo','cartesiana'),
+    struct('pose',[0.25   0.6   0.45    0  -pi/2    -pi/2+pi/6],'tipo','cartesiana'),
     %       4.1. Trayectoria
     struct('pose',[0.25   0.5   0.475     0  -pi/2    -pi/2],'tipo','articular'),
     %   5. Presiona boton (boton para producir el expresso)
     struct('pose',[0.25   0.6   0.5     0  -pi/2    -pi/2],'tipo','articular'),
     %       5.1. Trayectoria
-    struct('pose',[0.25   0.6   0.45     0  -pi/2    -pi/2],'tipo','articular'),
+    struct('pose',[0.25   0.5   0.475     0  -pi/2    -pi/2],'tipo','articular'),
     %   6. Retira la taza con cafe 
     struct('pose',[0.25   0.6   0.35    0  -pi/2    -pi/2],'tipo','articular'),
-    %   7. Pre-Entrega (Orientar taza nivelada)
+    %   7. Punto de Entrega
     struct('pose', [0.4, -0.15, 0.35, 0.001, -pi/2, pi], 'tipo', 'cartesiana'),
-    %   8. Punto de Entrega (Handover)
-    struct('pose', [0.4, -0.15, 0.35, 0.001, -pi/2, pi], 'tipo', 'cartesiana'), 
 };
 
 plist_R1_poses = cellfun(@(s) s.pose, plist_R1, 'UniformOutput', false);
@@ -195,7 +193,7 @@ groups_R1 = { [1 2], [2 3], [3 4], [4 5], [5 6], [6 7] };
 % - SOLUCIÓN CURVA: 5 puntos intermedios entre 1.3 (índice 8) y 1.4 (índice 14)
 %   Estrategia: Trayectoria curva bajando Z y aumentando Y moderadamente para rodear singularidad
 % Del punto 1 (índice 2) al punto 2 (índice 16) hay 15 trayectorias
-groups_R2 = { [1 2], [2 3 4 5 6 7 8 9 10 11 12 13 14 15 16], [16 17], [17 18], [18 19], [19 20], [20 21], [21 22], [22 23] };
+groups_R2 = { [1 2], [2 3 4 5 6 7 8 9 10 11 12 13 14 15 16], [16 17], [17 18], [18 19 20], [20 21 22], [22 23] };
 
 crear_gui([R1 R2], {plist_R1 plist_R2}, {Tlist_R1 Tlist_R2}, {qseq_R1 qseq_R2}, n, N, {groups_R1, groups_R2});
 
