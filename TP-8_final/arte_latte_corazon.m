@@ -95,12 +95,20 @@ function arte_latte_corazon(R, centro_base_xyz, rpy_fijo)
             q_anterior = zeros(6,1);
         end
     end
+    
+    % Acumular trayectorias para gráficos finales
+    Q_arte = zeros(size(Cart_traj,1), 6);
+    
     for i = 1:size(Cart_traj,1)
         vec_cart = Cart_traj(i,:);
         T_base = transl(vec_cart(1:3)) * rpy2tr(vec_cart(4:6),'zyx');
         T_k = R.base.double * T_base;
         q_next = ik_barista(R, T_k, q_anterior, true);
         R.animate(q_next');
+        
+        % Acumular q para gráficos
+        Q_arte(i,:) = q_next';
+        
         % Agregar punto del TCP en mundo al trazo
         T_tcp = R.fkine(q_next');
         p = T_tcp.t;
@@ -110,6 +118,38 @@ function arte_latte_corazon(R, centro_base_xyz, rpy_fijo)
     end
 
     title('Arte latte: trayectoria de corazón');
+    
+    % Graficar trayectorias articulares (q y dq) como en ejecutar_trayectorias
+    robot_name = R.name;
+    colors = lines(6);
+    labels = arrayfun(@(i) sprintf('q%d',i), 1:6, 'UniformOutput', false);
+    
+    % Calcular velocidades
+    Qd_arte = [diff(Q_arte)/dt; zeros(1,6)];
+    
+    % Ventana 1: Posiciones articulares
+    fig1 = figure();
+    set(fig1, 'Name', sprintf('%s - Arte Latte - Posiciones', robot_name));
+    hold on; grid on;
+    for i=1:6
+        plot(Q_arte(:,i), 'Color', colors(i,:), 'LineWidth',1.2);
+    end
+    legend(labels{:}, 'Location','best');
+    title(sprintf('%s - Arte Latte - q1..q6', robot_name));
+    xlabel('muestra'); ylabel('rad');
+    
+    % Ventana 2: Velocidades articulares
+    fig2 = figure();
+    set(fig2, 'Name', sprintf('%s - Arte Latte - Velocidades', robot_name));
+    hold on; grid on;
+    for i=1:6
+        plot(Qd_arte(:,i), 'Color', colors(i,:), 'LineWidth',1.2);
+    end
+    legend(labels{:}, 'Location','best');
+    title(sprintf('%s - Arte Latte - dq1..dq6', robot_name));
+    xlabel('muestra'); ylabel('rad/s');
+    
+    disp('Arte latte completado');
 end
 
 
