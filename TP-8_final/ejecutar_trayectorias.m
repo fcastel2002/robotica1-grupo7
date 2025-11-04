@@ -81,12 +81,69 @@ for k = 2:numel(plist) % el segundo punto es el primer "destino"
             seg_bounds(end+1) = size(Q_completo,1); %#ok<AGROW>
             
             % No graficar aquí, se hará al final
+            
+        case 'articular_relativo'
+            % Movimiento articular RELATIVO a la pose anterior (q_curr)
+            % Usado para acciones de herramienta en singularidades (ej. volcar)
+            % No usa IK, por lo tanto no hay picos de velocidad.
+            
+            q_start = q_curr;
+            
+            % La 'pose' es el vector de offset articular
+            q_relativo = plist{k}.pose;
+            
+            % Verificamos que sea un vector 1x6
+            if numel(q_relativo) ~= R.n
+                error('El tipo "articular_relativo" requiere una "pose" de [1x%d] (vector de offset q)', R.n);
+            end
+            
+            q_end = q_start + q_relativo(:); % Asegurar que sea columna
+            
+            % Opcional: Verificar límites de la pose final
+            if ~all(q_end >= R.qlim(:, 1) & q_end <= R.qlim(:, 2))
+                warning('MOVIMIENTO RELATIVO RESULTA FUERA DE LÍMITES');
+                disp('Q-Start:'); disp(q_start);
+                disp('Q-Rel:'); disp(q_relativo);
+                disp('Q-End:'); disp(q_end);
+            end
+
+            % Calcular trayectoria JTRAJ (usamos N=15 pasos fijos para esta acción)
+            N_segmento = 15;
+            [q_tray_segmento, qd_tray_segmento] = jtraj(q_start', q_end', N_segmento);
+            
+            % Animar y acumular
+            for i = 1:N_segmento
+                R.animate(q_tray_segmento(i, :));
+                
+                if ~isempty(h_frame), delete(h_frame); end
+                T_tcp = R.fkine(q_tray_segmento(i, :));
+                h_frame = trplot(T_tcp, 'frame', '', 'color', 'm', 'length', 0.2,'width',0.2,'arrow');
+                setappdata(fig,'h_tcp_frame', h_frame);
+                drawnow;
+                
+                % (Pausa dt)
+                if TF > 0, pause(TF/N_segmento); else, pause(0.01); end
+            end
+            
+            % Acumular trayectoria completa
+            Q_completo = [Q_completo; q_tray_segmento];
+            Qd_completo = [Qd_completo; qd_tray_segmento];
+            seg_bounds(end+1) = size(Q_completo,1); %#ok<AGROW>
+            
+            % Actualizar estado para el próximo bucle
+            Tlist{k} = R.fkine(q_end').double; % Actualizamos Tlist con el resultado
+            q_curr = q_end; % Usar q_end en lugar de qseq(:,k) - será sobrescrito al final pero no importa
+            
         otherwise
             warning('Tipo de movimiento "%s" no reconocido. Saltando segmento.', tipo_movimiento);
     end
 
     pause(0.5);
-    q_curr = qseq(:,k);
+    % Para 'articular_relativo', q_curr ya fue actualizado dentro del case
+    % Para otros tipos, usar qseq(:,k)
+    if ~strcmp(tipo_movimiento, 'articular_relativo')
+        q_curr = qseq(:,k);
+    end
 end
 
 % Graficar trayectorias completas en ventanas nuevas

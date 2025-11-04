@@ -11,7 +11,7 @@ if nargin < 7, groups = []; end
 fig = gcf;
  
 % Layout derecho simple robot 1
-x = 0.85; w = 0.12; h = 0.06; dy = 0.08; y0 = 0.80;
+x = 0.85; w = 0.12; h = 0.06; dy = 0.08; y0 = 0.65; % y0 reducido para dejar espacio al botón de arte latte
 
 % Botón "Todo" R1
 uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
@@ -28,15 +28,17 @@ uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
 
 % Botones agrupados o por segmento
 y = y0 - dy;
-if ~isempty(groups)
+if ~isempty(groups) && numel(groups) >= 1 && ~isempty(groups{1})
     % groups{1}: celdas con índices de plist{1}
     for g = 1:numel(groups{1})
         idxs = groups{1}{g};
-        etiqueta = sprintf('%d -> %d', g-1, g);
-        uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
-            'Position',[x y w h], 'String',etiqueta, 'FontSize',10, ...
-            'Callback', @(~,~) ejecutar_grupo(R(1), plist{1}, Tlist{1}, qseq{1}, idxs));
-        y = y - dy;
+        if ~isempty(idxs)
+            etiqueta = sprintf('%d -> %d', g-1, g);
+            uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
+                'Position',[x y w h], 'String',etiqueta, 'FontSize',10, ...
+                'Callback', @(~,~) ejecutar_grupo(R(1), plist{1}, Tlist{1}, qseq{1}, idxs));
+            y = y - dy;
+        end
     end
 else
 for k = 2:numel(plist{1})

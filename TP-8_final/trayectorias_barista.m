@@ -39,8 +39,10 @@ plist_R1 = {
     struct('pose',[0.4      -0.6      0.33    0   pi/2    -pi/2],'tipo','articular'),
     %   5. Lleva jarra sobre taza con cafe
     struct('pose', [0.499,      0,     0.55,  0, pi/2-0.01, 0], 'tipo', 'cartesiana'),
-    %   6. Vuelca la leche sobre el cafe
-    struct('pose', [0.499, 0,     0.55,  0.01, pi/2+0.5, 0], 'tipo', 'cartesiana'),
+    %   6. Vuelca la leche sobre el cafe (Movimiento Relativo)
+    %   Vector [dq1, dq2, dq3, dq4, dq5, dq6]
+    %   Solo sumamos 0.51 rad a q5 (pi/2+0.5 - (pi/2-0.01))
+    struct('pose', [0, 0, 0, 0.01, 0.51, 0], 'tipo', 'articular_relativo'),
 };
     
     %% ROBOT CAFETERO R2
@@ -124,8 +126,14 @@ plist_R2_poses = cellfun(@(s) s.pose, plist_R2, 'UniformOutput', false);
 
 %% transformamos a SE3 con transl y rpy2tr (ROLL-PITCH-YAW to SE(3)
 for i=1:length(plist_R1)
-    Tlist_R1{i} = transl(plist_R1_poses{i}(1:3)) * rpy2tr(plist_R1_poses{i}(4:6),'zyx');
-    Tlist_R1{i} = R1.base.double * Tlist_R1{i};
+    % Solo convertir a SE3 si NO es movimiento relativo
+    if ~strcmp(plist_R1{i}.tipo, 'articular_relativo')
+        Tlist_R1{i} = transl(plist_R1_poses{i}(1:3)) * rpy2tr(plist_R1_poses{i}(4:6),'zyx');
+        Tlist_R1{i} = R1.base.double * Tlist_R1{i};
+    else
+        % Para movimiento relativo, Tlist se calculará después usando FK del q final
+        Tlist_R1{i} = [];
+    end
 end
 for i=1:length(plist_R2)
     Tlist_R2{i} = transl(plist_R2_poses{i}(1:3)) * rpy2tr(plist_R2_poses{i}(4:6),'zyx');
@@ -140,9 +148,21 @@ q_curr_R1 = zeros(6,1);    % postura inicial (ajustar si se desea otra q)
 q_curr_R2 = zeros(6,1);
 
 for k = 1:numel(Tlist_R1)
-    qk = ik_barista(R1, Tlist_R1{k}, q_curr_R1, true);
-    qseq_R1(:,k) = qk;
-    q_curr_R1 = qk;
+    % Verificar si es movimiento relativo
+    if strcmp(plist_R1{k}.tipo, 'articular_relativo')
+        % Para movimiento relativo: sumar el offset directamente
+        q_relativo = plist_R1{k}.pose(:); % Asegurar que sea columna
+        qk = q_curr_R1 + q_relativo;
+        qseq_R1(:,k) = qk;
+        q_curr_R1 = qk;
+        % Calcular Tlist usando cinemática directa
+        Tlist_R1{k} = R1.base.double * R1.fkine(qk').double;
+    else
+        % Para movimientos normales: usar IK
+        qk = ik_barista(R1, Tlist_R1{k}, q_curr_R1, true);
+        qseq_R1(:,k) = qk;
+        q_curr_R1 = qk;
+    end
 end
 for k = 1:numel(Tlist_R2)
     qk = ik_barista(R2, Tlist_R2{k}, q_curr_R2, true);
