@@ -92,11 +92,12 @@ end
     end
     function ejecutar_todo_r1(R, plist, Tlist, qseq, n, N)
         % Ejecuta todo R1 y luego el arte latte como final
+        % El arte latte usa automáticamente la pose actual del robot (modo dinámico)
         ejecutar_trayectorias(R, plist, Tlist, qseq, n, N);
         try
-            arte_latte_corazon(R, [0.499 0 0.55], [0.01 pi/2+0.5 0]);
+            arte_latte_corazon(R);  % Modo dinámico: obtiene pose actual automáticamente
         catch ME
-            warning('Fallo al ejecutar arte latte: %s', ME.message);
+            warning(ME.identifier, 'Fallo al ejecutar arte latte: %s', ME.message);
         end
     end
     function ejecutar_ambos_sync(R_all, plist_all, Tlist_all, qseq_all, n, N)
