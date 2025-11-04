@@ -127,7 +127,7 @@ if(modelSTL)
 else
     R1.plot(qseq_R1(:,1)','workspace', workspace, 'scale',1, 'jointdiam',1.4,'nowrist','notiles');
     hold on;
-    R2.plot(qseq_R1(:,1)','workspace', workspace, 'scale',1, 'jointdiam',1.4,'nowrist','notiles');
+    R2.plot(qseq_R2(:,1)','workspace', workspace, 'scale',1, 'jointdiam',1.4,'nowrist','notiles');
 end
 trplot(R1.base, 'frame', R1.name, 'color', 'k', 'length', 0.5,'width',0.5,'rgb','arrow');
 trplot(R2.base, 'frame', R2.name, 'color', 'k', 'length', 0.5,'width',0.5,'rgb','arrow');

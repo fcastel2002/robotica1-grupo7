@@ -16,6 +16,11 @@ if ~isempty(h_ant) && isgraphics(h_ant)
     delete(h_ant);
 end
 h_frame = [];
+axlen = 0.3;
+T0_tcp = R.fkine(q_curr');
+h_frame = trplot( eye(4), 'frame','TCP', 'color','b', 'length',axlen, 'width',0.2, 'arrow' );
+set(h_frame,'Matrix', T0_tcp.double);
+setappdata(fig,'h_tcp_frame', h_frame);
 
 % Acumular trayectorias completas para gráficos finales
 Q_completo = [];
@@ -39,7 +44,6 @@ for k = 2:numel(plist) % el segundo punto es el primer "destino"
                 if ~isempty(h_frame), delete(h_frame); end
 
                 T_tcp = R.fkine(qt(i,:));
-                %Se saco TCP de ''
                 h_frame = trplot(T_tcp, 'frame', '', 'color', 'b', 'length', 0.2,'width',0.2,'arrow');
                 setappdata(fig,'h_tcp_frame', h_frame);
                 drawnow;
@@ -67,7 +71,10 @@ for k = 2:numel(plist) % el segundo punto es el primer "destino"
                 if ~isempty(h_frame), delete(h_frame); end
                 %Se saco TCP de ''
                 h_frame = trplot(Ts(i), 'frame', '', 'color', 'g', 'length', 0.2,'width',0.2);
+                T_tcp = R.fkine(q_next');
+                set(h_frame, 'Matrix', T_tcp.double);
                 setappdata(fig,'h_tcp_frame', h_frame);
+                
                 drawnow;
             end
             qd_tray_cart = diff(q_tray_cart)*N;
@@ -95,6 +102,8 @@ for k = 2:numel(plist) % el segundo punto es el primer "destino"
                 if ~isempty(h_frame), delete(h_frame); end
                 %Se saco TCP de ''
                 h_frame = trplot(Ts(i), 'frame', '', 'color', 'g', 'length', 0.2,'width',0.2);
+                T_tcp = R.fkine(q_next');
+                set(h_frame, 'Matrix', T_tcp.double);
                 setappdata(fig,'h_tcp_frame', h_frame);
                 drawnow;
             end
