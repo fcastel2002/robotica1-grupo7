@@ -41,12 +41,19 @@ plist_R1 = {
     struct('pose',[0.4      -0.6       0.4     0   pi/2    -pi/2],'tipo','articular'),
     %   4. Baja la jarra para sacarla de la lanceta
     struct('pose',[0.4      -0.6      0.33    0   pi/2    -pi/2],'tipo','articular'),
-    %   5. Lleva jarra sobre taza con cafe
-    struct('pose', [0.499,      0,     0.55,  0, pi/2-0.01, 0], 'tipo', 'cartesiana'),
-    %   6. Vuelca la leche sobre el cafe
-    struct('pose',[0,  0,  0,  0,  0.3,  0],'tipo','directa'), 
+    struct('pose',[0.35      -0.5      0.43    0   pi/2    -pi/2],'tipo','cartesiana'),
+    struct('pose',[0,  -0.3,  -0.2,  0.2,  0.1,  -0.4],'tipo','directa'), 
+    struct('pose',[0,  0,  0,  0,  2,  0],'tipo','directa'), 
 
-    struct('pose', [0.499, 0,     0.53, 0, pi/2+0.5, 0], 'tipo', 'cartesiana_fina'),
+    %struct('pose',[0,  0,  0,  0,  0.5,  0],'tipo','directa'), 
+
+    %   5. Lleva jarra sobre taza con cafe
+    struct('pose', [0.45,      -0.3,     0.58,  -0.01, pi/2+0.2, -0.01], 'tipo', 'cartesiana'),
+    struct('pose', [0.45,      -0.2,     0.62,  -0.01, pi/2+0.2, -0.01], 'tipo', 'cartesiana'),
+
+    struct('pose', [0.499,      0,     0.6,  -0.01, pi/2+0.2, -0.01], 'tipo', 'cartesiana'),
+
+    struct('pose', [0.499, 0,     0.55, -0.01, pi/2+0.8,-0.01], 'tipo', 'cartesiana_fina'),
 };
     
     %% ROBOT CAFETERO R2
@@ -189,10 +196,15 @@ for k = 1:numel(Tlist_R2)
 end
 
 % Definir grupos de trayectos (índices en plist) por pasos principales
-groups_R1 = { [1 2], [2 3], [3 4], [4 5], [5 6],[6 7],[7 8] };
-% --- MODIFICADO --- : Se añade el punto 5, se reindexa el resto
+groups_R1 = { [1 2], [2 3], [3 4], [4 5], [5 6],[6 7],[7 8],[8 9] [9 10 11]};
 groups_R2 = { [1 2], [2 3], [3 4 5 6], [6 7], [7 8 9], [8 9 10], [10 11 12], [12 13], [13 14 15] };
+N1 = numel(plist_R1);  % cantidad de puntos de R1
+N2 = numel(plist_R2);  % cantidad de puntos de R2
+groups_R1 = completar_grupos(groups_R1, N1);
+groups_R2 = completar_grupos(groups_R2, N2);
 
+% Paquete final para el snippet de UI que ya tienes
+groups = {groups_R1, groups_R2};
 crear_gui([R1 R2], {plist_R1 plist_R2}, {Tlist_R1 Tlist_R2}, {qseq_R1 qseq_R2}, n, N, {groups_R1, groups_R2});
 
 % Botón adicional: Arte latte (corazón) para R1
@@ -239,3 +251,85 @@ function mostrar_ayuda()
     ]);
     msgbox(ayuda, 'Ayuda - Secuencia de tareas');
 end
+
+function groups_out = completar_grupos(groups_in, N)
+% - Mantiene solapamiento entre grupos (NO quita índices por haber aparecido antes).
+% - Sanea cada grupo: quita fuera de rango y duplicados internos (orden estable).
+% - Si algún grupo queda con un único índice, lo expande:
+%     * si no es el primero: se PREPENDE el último índice del grupo previo
+%     * si es el primero: se intenta APPEND con +1 (o PREPEND -1 si está en N)
+% - Autocompleta un grupo final que EMPIEZA en el último índice del último grupo
+%   y continúa con todos los puntos > ese índice que no pertenecen a ningún grupo.
+
+  if nargin < 2, error('faltan argumentos (groups_in, N)'); end
+  if isempty(groups_in), groups_in = {}; end
+
+  groups_out = {};
+  % --- 1) Saneo por grupo (sin quitar solapamientos entre grupos) ---
+  for g = 1:numel(groups_in)
+    idxs = groups_in{g}(:)';                  % fila
+    % fuera de rango
+    fuera = idxs < 1 | idxs > N;
+    if any(fuera)
+      warning('Grupo %d: índices fuera de rango ignorados: %s', g, mat2str(idxs(fuera)));
+      idxs(fuera) = [];
+    end
+    % duplicados dentro del grupo (orden estable)
+    idxs = unique(idxs, 'stable');
+
+    % evitar grupo unitario (tramo degenerado)
+    if numel(idxs) == 1
+      if g > 1
+        anchor = groups_out{end}(end);
+        if anchor ~= idxs(1)
+          idxs = [anchor, idxs(1)];
+        else
+          % si coincide (raro), intentar expandir hacia adelante o atrás
+          if idxs(1) < N, idxs = [idxs(1), idxs(1)+1];
+          elseif idxs(1) > 1, idxs = [idxs(1)-1, idxs(1)];
+          end
+        end
+      else
+        % primer grupo y unitario: intentar  +1 (o -1 si está en N)
+        if idxs(1) < N
+          idxs = [idxs(1), idxs(1)+1];
+        elseif idxs(1) > 1
+          idxs = [idxs(1)-1, idxs(1)];
+        end
+      end
+    end
+
+    if ~isempty(idxs)
+      groups_out{end+1} = idxs; %#ok<AGROW>
+    end
+  end
+
+  if isempty(groups_out)
+    % si no había grupos, uno solo con 1..N
+    if N >= 2
+      groups_out = {1:N};
+    elseif N == 1
+      groups_out = {[1]};
+    end
+    return
+  end
+
+  % --- 2) Autocompletar cola: desde el último índice del último grupo ---
+  % puntos ya cubiertos (unión de todos los grupos actuales)
+  cubiertos = false(1, N);
+  for g = 1:numel(groups_out)
+    idxs = groups_out{g};
+    cubiertos(idxs) = true;
+  end
+
+  last_end = groups_out{end}(end);
+  if last_end < N
+    restantes = find(~cubiertos & (1:N) > last_end);
+    if ~isempty(restantes)
+      % grupo final: empieza en last_end y sigue con los no cubiertos en orden natural
+      groups_out{end+1} = [last_end, restantes]; %#ok<AGROW>
+    end
+  end
+end
+
+

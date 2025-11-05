@@ -163,7 +163,19 @@ function [q4,q5,q6] = calcular_orient(R, q1,q2,q3, T,q0)
             q5(i) = atan2(T6(2,3), T6(1,3)) - pi/2;
             T5 = R.links(5).A(q5(i)).double;
             T6 = invHomog(T5) * T6;
+            
             q6(i) = atan2(T6(2,1),T6(1,1));
+            overflow = q6(i) - q0(6);
+            if(overflow > pi)
+                q6(i) = q6(i) - 2*pi;
+
+            else if(overflow < -pi)
+
+                q6(i) = q6(i) + 2*pi;
+                
+            end
+            end
+
         end
 
     end
