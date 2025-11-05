@@ -32,7 +32,9 @@ if ~isempty(groups)
     % groups{1}: celdas con índices de plist{1}
     for g = 1:numel(groups{1})
         idxs = groups{1}{g};
-        etiqueta = sprintf('%d -> %d', g-1, g);
+        if isempty(idxs), continue; end
+        i0 = idxs(1); i1 = idxs(end);
+        etiqueta = sprintf('R1 %d -> %d', i0, i1);
         uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
             'Position',[x y w h], 'String',etiqueta, 'FontSize',10, ...
             'Callback', @(~,~) ejecutar_grupo(R(1), plist{1}, Tlist{1}, qseq{1}, idxs));
@@ -62,7 +64,9 @@ y = y0 - dy;
 if ~isempty(groups)
     for g = 1:numel(groups{2})
         idxs = groups{2}{g};
-        etiqueta = sprintf('R2 %d -> %d', g-1, g);
+        if isempty(idxs), continue; end
+        i0 = idxs(1); i1 = idxs(end);
+        etiqueta = sprintf('R2 %d -> %d', i0, i1);
         uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
             'Position',[x y w h], 'String',etiqueta, 'FontSize',10, ...
             'Callback', @(~,~) ejecutar_grupo(R(2), plist{2}, Tlist{2}, qseq{2}, idxs));

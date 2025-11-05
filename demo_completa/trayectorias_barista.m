@@ -44,7 +44,9 @@ plist_R1 = {
     %   5. Lleva jarra sobre taza con cafe
     struct('pose', [0.499,      0,     0.55,  0, pi/2-0.01, 0], 'tipo', 'cartesiana'),
     %   6. Vuelca la leche sobre el cafe
-    struct('pose', [0.499, 0,     0.55, 0.01, pi/2+0.5, 0], 'tipo', 'cartesiana_fina'),
+    struct('pose',[0,  0,  0,  0,  0.3,  0],'tipo','directa'), 
+
+    struct('pose', [0.499, 0,     0.53, 0, pi/2+0.5, 0], 'tipo', 'cartesiana_fina'),
 };
     
     %% ROBOT CAFETERO R2
@@ -54,12 +56,15 @@ plist_R1 = {
 plist_R2 = {
     %   0. Reposo
     struct('pose',[0.490+0.09   0    0.6     0   pi/1.5         0],'tipo',''),
+        struct('pose',[0,  0,  0,  0,  0,  -pi/2],'tipo','directa'), % Mueve q4 +45° (relativo)
+
     %   1. Recoge portafiltro (de maquina molino de cafe)
     struct('pose',[-0.2,  0.6   0.3     0.01   -pi/2+0.01      -pi/2+0.01],'tipo','articular'),
     %       1.2. Trayectoria
     struct('pose',[-0.2,  0.5  0.3     0.01   -pi/2+0.01      -pi/2+0.01],'tipo','cartesiana'),
-    %       1.3. Trayectoria
-    struct('pose',[0.25,  0.5  0.4     0.01   -pi/2+0.01      -pi/2+0.01],'tipo','cartesiana'),
+    %       1.2.5. Acomodación articular (NUEVO)
+    %       1.3. Trayectoria (SINGULARIDAD ACA)
+    struct('pose',[0.25,  0.5  0.4     0.01   -pi/2+0.01      -pi/2+0.01],'tipo','cartesiana_fina'),
     %   2. Lleva portafiltro a cafetera 
     struct('pose',[0.25   0.6   0.4     0.01  -pi/2+0.01   -pi/2],'tipo','cartesiana'),
     %   3. Introduce Portafiltro a Cafetera (sube 7cm)
@@ -84,14 +89,25 @@ plist_R1_poses = cellfun(@(s) s.pose, plist_R1, 'UniformOutput', false);
 plist_R2_poses = cellfun(@(s) s.pose, plist_R2, 'UniformOutput', false);
 
 %% transformamos a SE3 con transl y rpy2tr (ROLL-PITCH-YAW to SE(3)
+% --- MODIFICADO ---
+% Se añade un 'if' para omitir el cálculo de T si el tipo es 'directa'
 for i=1:length(plist_R1)
-    Tlist_R1{i} = transl(plist_R1_poses{i}(1:3)) * rpy2tr(plist_R1_poses{i}(4:6),'zyx');
-    Tlist_R1{i} = R1.base.double * Tlist_R1{i};
+    if ~strcmp(plist_R1{i}.tipo, 'directa')
+        Tlist_R1{i} = transl(plist_R1_poses{i}(1:3)) * rpy2tr(plist_R1_poses{i}(4:6),'zyx');
+        Tlist_R1{i} = R1.base.double * Tlist_R1{i};
+    else
+        Tlist_R1{i} = nan(4,4); % Placeholder
+    end
 end
 for i=1:length(plist_R2)
-    Tlist_R2{i} = transl(plist_R2_poses{i}(1:3)) * rpy2tr(plist_R2_poses{i}(4:6),'zyx');
-    Tlist_R2{i} = R2.base.double * Tlist_R2{i};
+    if ~strcmp(plist_R2{i}.tipo, 'directa')
+        Tlist_R2{i} = transl(plist_R2_poses{i}(1:3)) * rpy2tr(plist_R2_poses{i}(4:6),'zyx');
+        Tlist_R2{i} = R2.base.double * Tlist_R2{i};
+    else
+        Tlist_R2{i} = nan(4,4); % Placeholder
+    end
 end
+% --- FIN MODIFICADO ---
 
 %% 2) Resolver IK secuencialmente (usa la solución anterior como semilla)
 qseq_R1 = zeros(6, numel(Tlist_R1));
@@ -100,16 +116,36 @@ qseq_R2 = zeros(6, numel(Tlist_R2));
 q_curr_R1 = zeros(6,1);    % postura inicial (ajustar si se desea otra q)
 q_curr_R2 = zeros(6,1);
 
+% --- MODIFICADO ---
+% Se añade lógica para 'directa': calcula q_final sumando el relativo
+% en lugar de usar IK.
 for k = 1:numel(Tlist_R1)
-    qk = ik_barista(R1, Tlist_R1{k}, q_curr_R1, true);
-    qseq_R1(:,k) = qk;
-    q_curr_R1 = qk;
+    if strcmp(plist_R1{k}.tipo, 'directa')
+        q_relative = plist_R1{k}.pose'; % Vector 6x1 de mov. relativo
+        qk = q_curr_R1 + q_relative;    % q final es q_actual + relativo
+        qseq_R1(:,k) = qk;
+    else
+        % Tipos '', 'articular', 'cartesiana', etc. usan IK
+        qk = ik_barista(R1, Tlist_R1{k}, q_curr_R1, true);
+        qseq_R1(:,k) = qk;
+    end
+    q_curr_R1 = qk; % Actualiza la semilla para el siguiente punto
 end
+
 for k = 1:numel(Tlist_R2)
-    qk = ik_barista(R2, Tlist_R2{k}, q_curr_R2, true);
-    qseq_R2(:,k) = qk;
-    q_curr_R2 = qk;
+    if strcmp(plist_R2{k}.tipo, 'directa')
+        q_relative = plist_R2{k}.pose'; % Vector 6x1 de mov. relativo
+        qk = q_curr_R2 + q_relative;    % q final es q_actual + relativo
+        qseq_R2(:,k) = qk;
+    else
+        % Tipos '', 'articular', 'cartesiana', etc. usan IK
+        qk = ik_barista(R2, Tlist_R2{k}, q_curr_R2, true);
+        qseq_R2(:,k) = qk;
+    end
+    q_curr_R2 = qk; % Actualiza la semilla para el siguiente punto
 end
+% --- FIN MODIFICADO ---
+
 %% 3) Inicializar visualización
 figure(10); clf;
 
@@ -136,20 +172,26 @@ title('Robots Cooperativos Baristas');
 
 % Graficar puntos de Tlist
 for k = 1:numel(Tlist_R1)
-    T = Tlist_R1{k};
-    pos = T(1:3,4);
-    plot3(pos(1), pos(2), pos(3), 'ro', 'MarkerSize', 3, 'MarkerFaceColor', 'r');
-    %text(pos(1), pos(2), pos(3), sprintf('  P%d', k), 'FontSize', 10, 'Color', 'b');
+    % --- MODIFICADO --- : Solo grafica si NO es 'directa'
+    if ~strcmp(plist_R1{k}.tipo, 'directa')
+        T = Tlist_R1{k};
+        pos = T(1:3,4);
+        plot3(pos(1), pos(2), pos(3), 'ro', 'MarkerSize', 3, 'MarkerFaceColor', 'r');
+    end
 end
 for k = 1:numel(Tlist_R2)
-    T = Tlist_R2{k};
-    pos = T(1:3,4);
-    plot3(pos(1), pos(2), pos(3), 'ro', 'MarkerSize', 3, 'MarkerFaceColor', 'g');
-    %text(pos(1), pos(2), pos(3), sprintf('  P%d', k), 'FontSize', 10, 'Color', 'b');
+    % --- MODIFICADO --- : Solo grafica si NO es 'directa'
+    if ~strcmp(plist_R2{k}.tipo, 'directa')
+        T = Tlist_R2{k};
+        pos = T(1:3,4);
+        plot3(pos(1), pos(2), pos(3), 'ro', 'MarkerSize', 3, 'MarkerFaceColor', 'g');
+    end
 end
+
 % Definir grupos de trayectos (índices en plist) por pasos principales
-groups_R1 = { [1 2], [2 3], [3 4], [4 5], [5 6], [6 7] };
-groups_R2 = { [1 2], [2 3 4 5], [5 6], [6 7 8], [7 8 9], [9 10 11], [11 12], [12 13] };
+groups_R1 = { [1 2], [2 3], [3 4], [4 5], [5 6],[6 7],[7 8] };
+% --- MODIFICADO --- : Se añade el punto 5, se reindexa el resto
+groups_R2 = { [1 2], [2 3], [3 4 5 6], [6 7], [7 8 9], [8 9 10], [10 11 12], [12 13], [13 14 15] };
 
 crear_gui([R1 R2], {plist_R1 plist_R2}, {Tlist_R1 Tlist_R2}, {qseq_R1 qseq_R2}, n, N, {groups_R1, groups_R2});
 
@@ -168,6 +210,7 @@ uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
     'Callback', @(~,~) mostrar_ayuda());
 
 function mostrar_ayuda()
+    % --- MODIFICADO --- : Añadido punto 1.2.5
     ayuda = sprintf([ ...
         'R1 (Leche):\n', ...
         '  0: Reposo\n', ...
@@ -182,6 +225,7 @@ function mostrar_ayuda()
         '  0: Reposo\n', ...
         '  1: Recoge portafiltro (desde molino)\n', ...
         '  1.2: Trayectoria intermedia (cartesiana)\n', ...
+        '  1.2.5: Acomodación articular (directa)\n', ... % <-- NUEVO
         '  1.3: Trayectoria intermedia (cartesiana)\n', ...
         '  2: Lleva portafiltro a cafetera (cartesiana)\n', ...
         '  3: Introduce portafiltro (sube 7 cm)\n', ...

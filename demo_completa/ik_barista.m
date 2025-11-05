@@ -139,7 +139,8 @@ function [q4,q5,q6] = calcular_orient(R, q1,q2,q3, T,q0)
         disp(T36(3,3));
         total_rotation = atan2(T36(2,1), T36(1,1));
         q4(1) = total_rotation / 2; %q0 es el vector que le paso
-        q5(1) = 0.01;
+        disp(q0(5));
+        q5(1) = 0;
         q6(1) = total_rotation / 2;
         q4(2) = q4(1);
         q5(2) = q5(1);

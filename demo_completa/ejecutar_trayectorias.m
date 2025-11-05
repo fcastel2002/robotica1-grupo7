@@ -31,9 +31,34 @@ dt_seg = 0.05;  % dt aproximado por muestra
 for k = 2:numel(plist) % el segundo punto es el primer "destino"
     tipo_movimiento = plist{k}.tipo;
 
-    fprintf('Moviendo de waypoint %d → %d (pausa de %f segundos)\n', k-1, k, TF);
+    fprintf('Moviendo de waypoint %d → %d (tipo: %s)\n', k-1, k, tipo_movimiento);
 
     switch tipo_movimiento
+        
+        % --- NUEVO CASO 'directa' ---
+        case 'directa'
+            % Este movimiento es articular, usa jtraj para un perfil suave.
+            % qseq(:,k) ya contiene el q final (calculado en barista.m)
+            fprintf('--- Movimiento articular directo ---\n');
+            [qt, qd, qdd] = jtraj(q_curr', qseq(:,k)', n); %#ok<ASGLU>
+
+            for i = 1:n
+                R.animate(qt(i,:));
+
+                if ~isempty(h_frame), delete(h_frame); end
+
+                T_tcp = R.fkine(qt(i,:));
+                % Color magenta para distinguirlo
+                h_frame = trplot(T_tcp, 'frame', '', 'color', 'm', 'length', 0.2,'width',0.2,'arrow');
+                setappdata(fig,'h_tcp_frame', h_frame);
+                drawnow;
+            end
+            
+            % Acumular trayectoria
+            Q_completo = [Q_completo; qt];
+            Qd_completo = [Qd_completo; qd];
+            seg_bounds(end+1) = size(Q_completo,1); %#ok<AGROW>
+        % --- FIN NUEVO CASO ---
         
         case 'articular'
             [qt, qd, qdd] = jtraj(q_curr', qseq(:,k)', n); %#ok<ASGLU>
@@ -155,7 +180,7 @@ if ~isempty(Q_completo)
         plot(Qd_completo(:,i), 'Color', colors(i,:), 'LineWidth',1.2);
     end
     legend(labels{:}, 'Location','best');
-    title(sprintf('%s - dq1..dq6', robot_name));
+    title(sprintf('%s - dq1..q6', robot_name));
     xlabel('muestra'); ylabel('rad/s');
     % Marcar límites de segmentos
     for i=1:numel(seg_bounds)
