@@ -163,7 +163,7 @@ for k = 2:numel(plist) % el segundo punto es el primer "destino"
             warning('Tipo de movimiento "%s" no reconocido. Saltando segmento.', tipo_movimiento);
     end
     if ~isempty(q_segmento)
-        waypoints_q = q_segmento;
+        waypoints_q = q_segment0;
         num_muestras = size(waypoints_q, 1);
         path_pos_s = linspace(0, 1, num_muestras)';
 
@@ -171,17 +171,8 @@ for k = 2:numel(plist) % el segundo punto es el primer "destino"
         robot_prefix = R.name;
         start_idx = k-1;
         end_idx = k;
-        nombre_archivo_base = sprintf('%s_rawtraj_%d-%d.mat', robot_prefix, start_idx, end_idx);
-        nombre_archivo_completo = fullfile(output_dir, nombre_archivo_base);
-        try
-            save(nombre_archivo_completo, 'waypoints_q', "path_pos_s");
-        catch e
-            fprintf('Error al guardar %s: %s\n', nombre_archivo_base);
-        end
+        nombre_archivo_base = sprintf('%s_rawtraj_%d')
 
-    elseif ~strcmp(tipo_movimiento, 'toppra') && k>1
-        fprintf('Trayectoria ya optimizada, no se genero ninguna nueva.');
-    end
     pause(0.5);
     q_curr = qseq(:,k);
 end
@@ -223,6 +214,36 @@ if ~isempty(Q_completo)
         xline(seg_bounds(i), 'r--', 'HandleVisibility','off');
     end
 end
+disp('Exportando trayectoria para Toppra...');
 
+% 1. Los waypoints son tu trayectoria completa
+waypoints_q = Q_completo;
+
+% 2. Creamos el vector de posición de trayectoria (path position 's')
+%    Lo normalizamos para que vaya de 0 a 1.
+num_muestras = size(waypoints_q, 1);
+path_pos_s = linspace(0, 1, num_muestras)'; % Vector columna
+
+try
+    % 'mfilename('fullpath')' obtiene la ruta completa del script actual (ej: C:\..._trayectorias.m)
+    % 'fileparts' extrae solo la parte de la carpeta (ej: C:\...MiProyecto\)
+    [script_dir, ~, ~] = fileparts(mfilename('fullpath'));
+
+    % Define el nombre del archivo
+    nombre_archivo_base = 'trayectoria_para_toppra.mat';
+    
+    % 'fullfile' une la ruta y el nombre de forma segura (funciona en Windows, Mac y Linux)
+    nombre_archivo_completo = fullfile(script_dir, nombre_archivo_base);
+
+    % Guardar las variables en esa ruta completa
+    save(nombre_archivo_completo, 'waypoints_q', 'path_pos_s');
+
+    fprintf('Trayectoria guardada exitosamente en: \n%s\n', nombre_archivo_completo);
+
+catch e
+    fprintf('ERROR AL INTENTAR GUARDAR EL ARCHIVO: %s\n', e.message);
+    disp('Asegúrese de tener permisos de escritura en la carpeta del script.');
+
+end
 disp('Trayectoria completada ');
 end
