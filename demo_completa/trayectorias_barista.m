@@ -42,14 +42,12 @@ plist_R1 = {
     %   4. Baja la jarra para sacarla de la lanceta
     struct('pose',[0.4      -0.6      0.33    0   pi/2    -pi/2],'tipo','articular'),
     struct('pose',[0.35      -0.5      0.43    0   pi/2    -pi/2],'tipo','cartesiana'),
-    struct('pose',[0,  -0.3,  -0.2,  0.2,  0.1,  -0.4],'tipo','directa'), 
+    struct('pose',[0,  -0.35,  -0.1,  0.25,  0.1,  -0.5],'tipo','directa'), 
     struct('pose',[0,  0,  0,  0,  2,  0],'tipo','directa'), 
 
     %struct('pose',[0,  0,  0,  0,  0.5,  0],'tipo','directa'), 
 
     %   5. Lleva jarra sobre taza con cafe
-    struct('pose', [0.45,      -0.3,     0.58,  -0.01, pi/2+0.2, -0.01], 'tipo', 'cartesiana'),
-    struct('pose', [0.45,      -0.2,     0.62,  -0.01, pi/2+0.2, -0.01], 'tipo', 'cartesiana'),
 
     struct('pose', [0.499,      0,     0.6,  -0.01, pi/2+0.2, -0.01], 'tipo', 'cartesiana'),
 
