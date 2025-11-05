@@ -3,133 +3,117 @@ import numpy as np
 import toppra as ta
 import toppra.constraint as constraint
 import toppra.algorithm as algo
-import matplotlib.pyplot as plt
+import os
+import glob
 
-print("Cargando datos desde MATLAB...")
+# --- 1. Configuración de Directorios ---
+INPUT_DIR = 'raw_trajectories'
+OUTPUT_DIR = 'toppra_trajectories'
 
-# 1. Cargar el archivo .mat
-try:
-    mat_data = scipy.io.loadmat('trayectoria_para_toppra.mat')
-except FileNotFoundError:
-    print("Error: No se encontró el archivo 'trayectoria_para_toppra.mat'.")
-    print("Asegúrate de ejecutar primero el script de MATLAB.")
-    exit()
+# --- 2. Crear Directorio de Salida (si no existe) ---
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+print(f"Directorio de salida asegurado: {OUTPUT_DIR}")
 
-# 2. Extraer los datos
-#    waypoints_q -> (N_muestras, N_juntas)
-#    path_pos_s  -> (N_muestras, 1)
-waypoints = mat_data['waypoints_q']
-path_pos = mat_data['path_pos_s'].flatten() # .flatten() para convertirlo en (N,)
-
-print(f"Datos cargados: {waypoints.shape[0]} waypoints para {waypoints.shape[1]} juntas.")
-
-# 3. Crear el objeto de trayectoria (Path) para toppra
-#    Usamos un interpolador Spline Cúbico.
-#    Le decimos que en la posición 's' (path_pos) debe estar en 'q' (waypoints)
-path = ta.SplineInterpolator(path_pos, waypoints)
-
-# 4. Definir las restricciones del robot (LÍMITES)
-N_JOINTS = waypoints.shape[1]
-
-# Límites de velocidad (rad/s) - (Ejemplo)
+# --- 3. Definir 
+# Restricciones del Robot (una sola vez) ---
+# Estas son las mismas para todas las trayectorias
+# Límites de velocidad (rad/s) - (¡Ajusta tus valores reales!)
 vlim_abs = np.array([2.0, 2.0, 2.0, 2.5, 2.5, 3.0]) 
 vlim = np.vstack([-vlim_abs, vlim_abs]).T # Formato (N_juntas, 2) [min, max]
 
-# Límites de aceleración (rad/s^2) - (Ejemplo)
-alim_abs = np.array([1, 1.5, 1.5, 1.0, 1.0, 1.0])
+# Límites de aceleración (rad/s^2) - (¡Ajusta tus valores reales!)
+alim_abs = np.array([1.0, 1.5, 1.5, 1.0, 1.0, 1.0])
 alim = np.vstack([-alim_abs, alim_abs]).T # Formato (N_juntas, 2) [min, max]
 
-# 5. Crear las restricciones para Toppra
-#    Toppra v1.0+ usa un formato de lista [min, max]
-pc_vel = constraint.JointVelocityConstraint(vlim)
-pc_acc = constraint.JointAccelerationConstraint(alim)
+# --- 4. Encontrar todos los archivos .mat de entrada ---
+# Busca todos los archivos que terminen en .mat dentro de INPUT_DIR
+search_pattern = os.path.join(INPUT_DIR, '*.mat')
+input_files = glob.glob(search_pattern)
 
-# 6. Instanciar el problema de parametrización
-#    (Usando el algoritmo TOPPRA más nuevo y robusto: )
-instance = algo.TOPPRA([pc_vel, pc_acc], path,
-                       gridpoints=np.linspace(path_pos[0], path_pos[-1], 1001))
+if not input_files:
+    print(f"Error: No se encontraron archivos .mat en el directorio '{INPUT_DIR}'.")
+    print("Asegúrate de ejecutar primero el script de MATLAB.")
+    exit()
 
-print("Calculando parametrización de tiempo óptima...")
-# 7. Resolver la trayectoria
-jnt_traj = instance.compute_trajectory(0, 0)
+print(f"Encontrados {len(input_files)} archivos para procesar. Comenzando...")
 
-if jnt_traj is None:
-    print("Error: No se pudo encontrar una solución para la parametrización.")
-else:
-    print(f"¡Trayectoria calculada! Duración total: {jnt_traj.duration:.3f} segundos")
+# --- 5. Bucle de Procesamiento por Lotes ---
+for input_filepath in input_files:
+    # Extraer el nombre base del archivo (ej: R1_rawtraj_0-1.mat)
+    input_filename = os.path.basename(input_filepath)
+    print(f"\n--- Procesando: {input_filename} ---")
 
-    # 8. Muestrear y graficar la nueva trayectoria optimizada
-    #    Muestreamos a 100 Hz (dt = 0.01)
-    ts_sample = np.arange(0, jnt_traj.duration, 0.01)
-    
-    # Interpolar en la nueva escala de tiempo
-    qs_new = jnt_traj(ts_sample)    # Posiciones
-    qds_new = jnt_traj(ts_sample, 1) # Velocidades
-    qdds_new = jnt_traj(ts_sample, 2) # Aceleraciones
-
-    # --- Gráficos ---
-    fig, axs = plt.subplots(3, 1, figsize=(10, 10), sharex=True)
-    
-    # Títulos
-    axs[0].set_title(f"Posición Articular (q) - Duración: {jnt_traj.duration:.3f} s")
-    axs[1].set_title("Velocidad Articular (qd)")
-    axs[2].set_title("Aceleración Articular (qdd)")
-
-    # Labels
-    axs[2].set_xlabel("Tiempo (s)")
-    axs[0].set_ylabel("Posición (rad)")
-    axs[1].set_ylabel("Velocidad (rad/s)")
-    axs[2].set_ylabel("Aceleración (rad/s^2)")
-
-    # Colores
-    colors = plt.get_cmap('tab10', N_JOINTS)
-
-    for i in range(N_JOINTS):
-        # Posición
-        axs[0].plot(ts_sample, qs_new[:, i], label=f'q{i+1}', color=colors(i))
+    try:
+        # 5.1. Cargar el archivo .mat individual
+        mat_data = scipy.io.loadmat(input_filepath)
         
-        # Velocidad
-        axs[1].plot(ts_sample, qds_new[:, i], label=f'qd{i+1}', color=colors(i))
-        # Límites de velocidad
-        axs[1].axhline(vlim[i, 1], color=colors(i), linestyle='--', lw=1)
-        axs[1].axhline(vlim[i, 0], color=colors(i), linestyle='--', lw=1)
-        
-        # Aceleración
-        axs[2].plot(ts_sample, qdds_new[:, i], label=f'qdd{i+1}', color=colors(i))
-        # Límites de aceleración
-        axs[2].axhline(alim[i, 1], color=colors(i), linestyle='--', lw=1)
-        axs[2].axhline(alim[i, 0], color=colors(i), linestyle='--', lw=1)
+        # 5.2. Extraer los datos
+        waypoints = mat_data['waypoints_q']
+        path_pos = mat_data['path_pos_s'].flatten() # .flatten() para (N,)
 
-    axs[0].legend(loc='best')
-    axs[0].grid(True)
-    axs[1].grid(True)
-    axs[2].grid(True)
-    
-    plt.tight_layout()
-    plt.show()
-    if jnt_traj is not None:
-        print("Guardando trayectoria optimizada para MATLAB...")
+        if waypoints.shape[0] <= 1:
+            print("Error: La trayectoria tiene 1 o menos puntos. Saltando.")
+            continue
+
+        print(f"Datos cargados: {waypoints.shape[0]} waypoints para {waypoints.shape[1]} juntas.")
+
+        # 5.3. Crear el objeto de trayectoria (Path)
+        path = ta.SplineInterpolator(path_pos, waypoints)
+
+        # 5.4. Crear las restricciones
+        pc_vel = constraint.JointVelocityConstraint(vlim)
+        pc_acc = constraint.JointAccelerationConstraint(alim)
+
+        # 5.5. Instanciar y resolver el problema TOPPRA
+        # (Aumentamos gridpoints por si las trayectorias son cortas)
+        gpts = max(101, waypoints.shape[0] * 2) 
+        instance = algo.TOPPRA([pc_vel, pc_acc], path,
+                               gridpoints=np.linspace(path_pos[0], path_pos[-1], gpts))
         
-        # Preparamos los datos en un diccionario
-        # Es importante usar nombres de variables claros
+        print("Calculando parametrización de tiempo óptima...")
+        jnt_traj = instance.compute_trajectory(0, 0)
+
+        # 5.6. Comprobar si TOPPRA falló
+        if jnt_traj is None:
+            print("Error: TOPPRA no pudo encontrar una solución. Saltando este archivo.")
+            continue
+            
+        print(f"¡Trayectoria calculada! Duración total: {jnt_traj.duration:.3f} segundos")
+
+        # 5.7. Muestrear la nueva trayectoria optimizada (sin graficar)
+        ts_sample = np.arange(0, jnt_traj.duration, 0.01) # Muestreo a 100 Hz
+        qs_new = jnt_traj(ts_sample)    # Posiciones
+        qds_new = jnt_traj(ts_sample, 1) # Velocidades
+        qdds_new = jnt_traj(ts_sample, 2) # Aceleraciones
+
+        # 5.8. Preparar datos para guardar
         datos_para_matlab = {
-            'ts_sample': ts_sample,  # Vector de tiempo (N,)
-            'q_toppra': qs_new,      # Posiciones (N, 6)
-            'qd_toppra': qds_new,     # Velocidades (N, 6)
-            'qdd_toppra': qdds_new    # Aceleraciones (N, 6)
+            'ts_sample': ts_sample,
+            'q_toppra': qs_new,
+            'qd_toppra': qds_new,
+            'qdd_toppra': qdds_new
         }
         
-        # Nombre del archivo de salida
-        nombre_archivo_salida = 'trayectoria_optimizada.mat'
+        # 5.9. Crear nombre de archivo de salida
+        # Reemplaza "_rawtraj_" con "_toppratraj_"
+        output_filename = input_filename.replace('_rawtraj_', '_toppratraj_')
         
-        # Guardar en .mat
-        # 'do_compression=True' ahorra espacio
-        # 'oned_as='row'' asegura que los vectores (como ts_sample) se guarden como 1xN
+        # Crear la ruta completa de salida
+        output_filepath = os.path.join(OUTPUT_DIR, output_filename)
+        
+        # 5.10. Guardar el nuevo archivo .mat
         scipy.io.savemat(
-            nombre_archivo_salida, 
+            output_filepath, 
             datos_para_matlab, 
             do_compression=True, 
             oned_as='row'
         )
         
-        print(f"Trayectoria optimizada guardada en: {nombre_archivo_salida}")
+        print(f"Trayectoria optimizada guardada en: {output_filepath}")
+
+    except Exception as e:
+        print(f"Error fatal procesando el archivo {input_filename}: {e}")
+        print("Saltando al siguiente archivo.")
+        continue
+
+print("\n--- Proceso por lotes completado. ---")

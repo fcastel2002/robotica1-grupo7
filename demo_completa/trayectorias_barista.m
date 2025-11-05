@@ -194,7 +194,7 @@ for k = 1:numel(Tlist_R2)
 end
 
 % Definir grupos de trayectos (índices en plist) por pasos principales
-groups_R1 = { [1 2], [2 3], [3 4], [4 5], [5 6],[6 7],[7 8],[8 9] [9 10 11]};
+groups_R1 = { [1 2], [2 3], [3 4], [4 5], [5 6],[6 7],[7 8] };
 groups_R2 = { [1 2], [2 3], [3 4 5 6], [6 7], [7 8 9], [8 9 10], [10 11 12], [12 13], [13 14 15] };
 N1 = numel(plist_R1);  % cantidad de puntos de R1
 N2 = numel(plist_R2);  % cantidad de puntos de R2
