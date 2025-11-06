@@ -7,74 +7,27 @@ fig = gcf;
  
 % Layout derecho simple robot 1
 x = 0.85; w = 0.12; h = 0.06; dy = 0.08; y0 = 0.80;
-
 % Botón "Todo" R1 (Raw)
 uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
     'Position',[x y0 w h], 'String','Ejecutar TODO R1', ...
     'FontSize',11, ...
     'Callback', @(~,~) ejecutar_todo_r1(R(1), plist{1}, Tlist{1}, qseq{1}, n, N));
-
 % Botón "Ambos (sync)"
-y_sync = y0 - dy/2; % un poco debajo
+y_sync = y0 - dy/2;
 uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
     'Position',[0.45 y_sync 0.18 h], 'String','Ejecutar Ambos (sync)', ...
     'FontSize',11, ...
-    'Callback', @(~,~) ejecutar_ambos_sync(R, plist, Tlist, qseq, n, N));
-
+    'Callback', @(~,~) ejecutar_ambos_sync(R)); % <--- ¡ESTE CALLBACK AHORA HACE ALGO NUEVO!
 % --- 'y' se inicializa para el botón Optimizado ---
 y = y0 - dy; % 'y' empieza en 0.72
-y = y - dy; % Mover 'y' hacia abajo DE NUEVO
 
 % --- NUEVO BOTÓN: Ejecutar Optimizado R1 ---
 uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
     'Position',[x y w h], 'String','Ejecutar Optimizado R1', ...
-    'FontSize',11, 'FontWeight', 'bold', 'ForegroundColor', [0 0 0.8], ... % Color azul
+    'FontSize',11, 'FontWeight', 'bold', 'ForegroundColor', [0 0 0.8], ...
     'Callback', @(~,~) ejecutar_secuencia_toppra(R(1)));
-% --- FIN NUEVO ---
-
 % Botones agrupados o por segmento (raw)
 y = y - dy; % Mover 'y' (ahora y = 0.64) <-- Espacio para "Arte latte"
-if ~isempty(groups)
-    % groups{1}: celdas con índices de plist{1}
-    for g = 1:numel(groups{1})
-        idxs = groups{1}{g};
-        if isempty(idxs), continue; end
-        i0 = idxs(1); i1 = idxs(end);
-        etiqueta = sprintf('R1 %d -> %d', i0, i1);
-        uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
-            'Position',[x y w h], 'String',etiqueta, 'FontSize',10, ...
-            'Callback', @(~,~) ejecutar_grupo(R(1), plist{1}, Tlist{1}, qseq{1}, idxs));
-        y = y - dy;
-    end
-else
-    for k = 2:numel(plist{1})
-    txt = sprintf('Punto %d → %d', k-1, k);
-    uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
-        'Position',[x y w h], 'String',txt, 'FontSize',10, ...
-        'Callback', @(~,~) ejecutar_tramo(k,R(1),plist{1},Tlist{1},qseq{1}));
-    y = y - dy;
-    end
-end
-
-% Layout izquierdo simple robot 2
-x = 0.03; w = 0.12; h = 0.06; dy = 0.08; y0 = 0.80;
-
-% Botón "Todo" R2 (Raw)
-uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
-    'Position',[x y0 w h], 'String','Ejecutar TODO R2', ...
-    'FontSize',11, ...
-    'Callback', @(~,~) ejecutar_trayectorias(R(2), plist{2}, Tlist{2}, qseq{2}, n, N));
-
-% --- NUEVO BOTÓN: Ejecutar Optimizado R2 ---
-y = y0 - dy; % Mover 'y' hacia abajo
-uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
-    'Position',[x y w h], 'String','Ejecutar Optimizado R2', ...
-    'FontSize',11, 'FontWeight', 'bold', 'ForegroundColor', [0 0 0.8], ... % Color azul
-    'Callback', @(~,~) ejecutar_secuencia_toppra(R(2)));
-% --- FIN NUEVO ---
-
-% Botones agrupados o por segmento para R2 (raw)
-y = y - dy; % Mover 'y' hacia abajo DE NUEVO
 if ~isempty(groups)
     for g = 1:numel(groups{1})
         idxs = groups{1}{g};
