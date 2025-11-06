@@ -18,7 +18,7 @@ print(f"Directorio de salida asegurado: {OUTPUT_DIR}")
 # Restricciones del Robot (una sola vez) ---
 # Estas son las mismas para todas las trayectorias
 # Límites de velocidad (rad/s) - (¡Ajusta tus valores reales!)
-vlim_abs = np.array([2.0, 2.0, 2.0, 2.5, 2.5, 3.0]) 
+vlim_abs = np.array([2.0, 2.0, 2.0, 1, 1, 2.0]) 
 vlim = np.vstack([-vlim_abs, vlim_abs]).T # Formato (N_juntas, 2) [min, max]
 
 # Límites de aceleración (rad/s^2) - (¡Ajusta tus valores reales!)

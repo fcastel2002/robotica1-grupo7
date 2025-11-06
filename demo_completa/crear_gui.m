@@ -27,9 +27,9 @@ uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
     'FontSize',11, ...
     'Callback', @(~,~) ejecutar_ambos_sync(R, plist, Tlist, qseq, n, N));
 
-% --- CORRECCIÓN: 'y' se inicializa para el botón Optimizado ---
+% --- 'y' se inicializa para el botón Optimizado ---
 y = y0 - dy; % 'y' empieza en 0.72
-y = y - dy; % Mover 'y' de nuevo (ahora y = 0.56) <-- Empezar segmentos aqui
+y = y - dy; % Mover 'y' hacia abajo DE NUEVO
 
 % --- NUEVO BOTÓN: Ejecutar Optimizado R1 ---
 uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
@@ -39,7 +39,7 @@ uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
 % --- FIN NUEVO ---
 
 % Botones agrupados o por segmento (raw)
-y = y - dy; % Mover 'y' hacia abajo DE NUEVO (ahora y = 0.64)
+y = y - dy; % Mover 'y' (ahora y = 0.64) <-- Espacio para "Arte latte"
 if ~isempty(groups)
     % groups{1}: celdas con índices de plist{1}
     for g = 1:numel(groups{1})
@@ -268,23 +268,31 @@ function cerrar_figuras_anteriores()
 
 % --- NUEVA FUNCIÓN HELPER (CALLBACK) ---
     function ejecutar_secuencia_toppra(robot_a_ejecutar)
-        % (Esta función no se modifica)
+        % --- SECCIÓN MODIFICADA ---
+        % Esta es la nueva función de callback para los botones optimizados
         fprintf('\n--- Iniciando ejecución de secuencia optimizada (TOPPRA) para %s ---\n', robot_a_ejecutar.name);
+        
+        % --- 1. Determinar rutas y prefijo ---
         prefijo_robot = robot_a_ejecutar.name;
         try
             [script_dir, ~, ~] = fileparts(mfilename('fullpath'));
             directorio_base = script_dir;
         catch
-            directorio_base = pwd;
+            directorio_base = pwd; % Fallback
         end
         directorio_toppra = fullfile(directorio_base, 'toppra_trajectories');
+        
+        % --- 2. Buscar y ordenar archivos ---
         patron_busqueda = fullfile(directorio_toppra, [prefijo_robot, '_toppratraj_*.mat']);
         lista_archivos = dir(patron_busqueda);
+        
         if isempty(lista_archivos)
             msgbox(sprintf('No se encontraron archivos optimizados en:\n%s\n\nCon el prefijo: "%s_toppratraj_..."', directorio_toppra, prefijo_robot), ...
                    'Error - Faltan archivos Toppra', 'error');
             return;
         end
+        
+        % Ordenar numéricamente (clave)
         indices_inicio = zeros(numel(lista_archivos), 1);
         for i = 1:numel(lista_archivos)
             try
@@ -296,6 +304,8 @@ function cerrar_figuras_anteriores()
         end
         [~, orden_correcto] = sort(indices_inicio);
         lista_archivos_ordenada = lista_archivos(orden_correcto);
+        
+        % --- 3. Cargar pos inicial y "saltar" robot a esa posición ---
         try
             archivo_primero = fullfile(lista_archivos_ordenada(1).folder, lista_archivos_ordenada(1).name);
             datos_primero = load(archivo_primero);
@@ -308,25 +318,90 @@ function cerrar_figuras_anteriores()
             return;
         end
         
+        % --- 4. Ejecutar la secuencia Y ACUMULAR DATOS ---
+        
+        % Inicializar acumuladores para los gráficos
+        Q_total = [];
+        Qd_total = [];
+        Qdd_total = [];
+        T_total = [];
+        t_final_anterior = 0; % Para concatenar el tiempo
+
         for i = 1:numel(lista_archivos_ordenada)
             archivo = lista_archivos_ordenada(i);
             ruta_completa = fullfile(archivo.folder, archivo.name);
             
-            fprintf('--- [%d/%d] Ejecutando: %s ---\n', i, numel(lista_archivos_ordenada), archivo.name);
+            % --- Cargar datos para acumular ---
+            try
+                datos = load(ruta_completa);
+                ts = datos.ts_sample;
+                q_traj = datos.q_toppra;
+                qd_traj = datos.qd_toppra;
+                qdd_traj = datos.qdd_toppra;
+            catch e
+                warning('No se pudo cargar %s para gráficos. Saltando. Error: %s', archivo.name, e.message);
+                continue;
+            end
             
+            % --- Acumular datos ---
+            if i > 1 && ~isempty(ts)
+                % Omite el primer punto (ts(1) es 0) para evitar duplicados
+                % y solapamiento de tiempo
+                idx_start = 2;
+                ts_segmento = ts(idx_start:end) + t_final_anterior;
+                Q_total     = [Q_total;   q_traj(idx_start:end, :)];
+                Qd_total    = [Qd_total;  qd_traj(idx_start:end, :)];
+                Qdd_total   = [Qdd_total; qdd_traj(idx_start:end, :)];
+                T_total     = [T_total;   ts_segmento(:)];
+            elseif i == 1 && ~isempty(ts)
+                % Primer segmento: usar todos los puntos
+                ts_segmento = ts;
+                Q_total     = q_traj;
+                Qd_total    = qd_traj;
+                Qdd_total   = qdd_traj;
+                T_total     = ts_segmento(:);
+            end
+            
+            % Guardar el último tiempo para el offset
+            if ~isempty(ts_segmento)
+                t_final_anterior = ts_segmento(end);
+            end
+
+            % --- Ejecutar animación ---
+            fprintf('--- [%d/%d] Ejecutando: %s ---\n', i, numel(lista_archivos_ordenada), archivo.name);
             if ~exist('ejecutar_toppra', 'file')
                 msgbox('Error: La función "ejecutar_toppra.m" no se encuentra en el path de MATLAB.', 'Error de función', 'error');
                 return;
             end
-            
+            % Llama a la animación (false = sin gráficos individuales)
             ejecutar_toppra(robot_a_ejecutar, ruta_completa, false);
             
-            pause(0.1);
+            pause(0.1); % Breve pausa entre segmentos
         end
+        
         fprintf('\n--- ¡Secuencia optimizada completada para %s! ---\n', prefijo_robot);
         
-        disp('Mostrando gráficos del último segmento...');
-        ejecutar_toppra(robot_a_ejecutar, ruta_completa, true);
+        % --- NUEVO: Mostrar gráficos de la secuencia COMPLETA ---
+        disp('Mostrando gráficos de la secuencia completa...');
+        if ~isempty(T_total)
+            robot_name = robot_a_ejecutar.name;
+            labels = arrayfun(@(k) sprintf('q%d',k), 1:size(Q_total,2), 'UniformOutput', false);
+    
+            fig1 = figure(); set(fig1,'Name',sprintf('%s - Posiciones (Toppra Completa)',robot_name));
+            plot(T_total, Q_total); grid on; legend(labels{:}, 'Location','best');
+            title(sprintf('%s - q1..q6 (Toppra Completa)', robot_name)); xlabel('Tiempo (s)'); ylabel('rad');
+            
+            fig2 = figure(); set(fig2,'Name',sprintf('%s - Velocidades (Toppra Completa)',robot_name));
+            plot(T_total, Qd_total); grid on; legend(labels{:}, 'Location','best');
+            title(sprintf('%s - dq1..dq6 (Toppra Completa)', robot_name)); xlabel('Tiempo (s)'); ylabel('rad/s');
+            
+            fig3 = figure(); set(fig3,'Name',sprintf('%s - Aceleraciones (Toppra Completa)',robot_name));
+            plot(T_total, Qdd_total); grid on; legend(labels{:}, 'Location','best');
+            title(sprintf('%s - ddq1..ddq6 (Toppra Completa)', robot_name)); xlabel('Tiempo (s)'); ylabel('rad/s^2');
+        else
+            disp('No se acumularon datos para graficar.');
+        end
+        % --- FIN DE SECCIÓN MODIFICADA ---
     end
 % --- FIN NUEVA FUNCIÓN ---
 

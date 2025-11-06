@@ -81,7 +81,7 @@ plist_R2 = {
     %   5. Presiona boton (boton para producir el expresso)
     struct('pose',[0.25   0.6   0.5     0  -pi/2    -pi/2],'tipo','articular'),
     %       5.1. Trayectoria
-    struct('pose',[0.25   0.6   0.45     0  -pi/2    -pi/2],'tipo','articular'),
+    struct('pose',[0.25   0.45   0.45     0  -pi/2    -pi/2],'tipo','articular'),
     %   6. Retira la taza con cafe 
     struct('pose',[0.25   0.6   0.35    0  -pi/2    -pi/2],'tipo','articular'),
     %   7. Pre-Entrega (Orientar taza nivelada)
