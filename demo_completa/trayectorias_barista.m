@@ -6,7 +6,7 @@ run ('robot.m')
 % cambiar a false si no se desean ver los modelos STL
 model_stl = false;
 global animar;
-animar = false;
+animar = true;
 %%
 
 %% 0) Parámetros de animación

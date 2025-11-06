@@ -115,8 +115,9 @@ if use_groups_r2
         if isempty(idxs), continue; end
         i0 = idxs(1); i1 = idxs(end);
         etiqueta = sprintf('R2 %d -> %d', i0, i1);
-        uicontrol('Position',[x y w h],'String',etiqueta, ...
-            'Callback', @(~,~) ejecutar_grupo(R(2), plist{2}, Tlist{2}, qseq{2}, idxs),'Units','normalized');
+        uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
+            'Position',[x y w h], 'String',etiqueta, 'FontSize',10, ...
+            'Callback', @(~,~) ejecutar_grupo(R(2), plist{2}, Tlist{2}, qseq{2}, idxs));
         y = y - dy;
     end
 else
