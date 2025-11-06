@@ -5,6 +5,9 @@ function ejecutar_toppra(R, archivo_mat, plot_results)
 %   R             - Handle del robot (ej: R1)
 %   archivo_mat   - Ruta completa al archivo .mat (ej: 'toppra_trajectories/R1_toppratraj_0-1.mat')
 %   plot_results  - (Opcional) true/false. Si es true, genera los gráficos.
+%% DEBUG
+    global animar;
+%%
 
 if nargin < 3
     plot_results = false; % Por defecto, no mostrar gráficos
@@ -67,13 +70,16 @@ while i <= N
 
     % Actualiza robot
     qi = q_traj(i,:);
-    R.animate(qi);
-
-    % Actualiza el TCP
+    if(animar)
+        R.animate(qi);
+    end
     if mod(i, tcp_stride) == 1
         T = R.fkine(qi);
         if isa(T,'SE3'), T = T.T; end
+        if(animar)
         set(h_frame, 'Matrix', T);
+        end
+
     end
 
     drawnow limitrate nocallbacks

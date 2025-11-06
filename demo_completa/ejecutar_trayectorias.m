@@ -4,6 +4,9 @@ function ejecutar_trayectorias(R, plist, Tlist, qseq, n, N,TF)
 %   R, plist, Tlist, qseq   -> mismos objetos del script
 %   n                       -> muestras por segmento articular
 %   N                       -> puntos de interpolación cartesiana
+%% DEBUG
+    global animar;
+%%
 
 if nargin < 5, n = 30; end
 if nargin < 6, N = 20; end
@@ -55,15 +58,19 @@ for k = 2:numel(plist) % el segundo punto es el primer "destino"
             [qt, qd, qdd] = jtraj(q_curr', qseq(:,k)', n); %#ok<ASGLU>
 
             for i = 1:n
-                R.animate(qt(i,:));
+
 
                 if ~isempty(h_frame), delete(h_frame); end
 
                 T_tcp = R.fkine(qt(i,:));
                 % Color magenta para distinguirlo
                 h_frame = trplot(T_tcp, 'frame', '', 'color', 'm', 'length', 0.2,'width',0.2,'arrow');
-                setappdata(fig,'h_tcp_frame', h_frame);
-                drawnow;
+                if(animar)
+                    R.animate(qt(i,:));
+                    setappdata(fig,'h_tcp_frame', h_frame);
+                    drawnow;
+
+                end
             end
             
             % Acumular trayectoria
@@ -77,14 +84,17 @@ for k = 2:numel(plist) % el segundo punto es el primer "destino"
             [qt, qd, qdd] = jtraj(q_curr', qseq(:,k)', n); %#ok<ASGLU>
 
             for i = 1:n
-                R.animate(qt(i,:));
-
+                
                 if ~isempty(h_frame), delete(h_frame); end
 
                 T_tcp = R.fkine(qt(i,:));
                 h_frame = trplot(T_tcp, 'frame', '', 'color', 'b', 'length', 0.2,'width',0.2,'arrow');
-                setappdata(fig,'h_tcp_frame', h_frame);
-                drawnow;
+                if(animar)
+                    R.animate(qt(i,:));
+                    setappdata(fig,'h_tcp_frame', h_frame);
+                    drawnow;
+                end
+                
             end
             
             % Acumular trayectoria
@@ -104,7 +114,7 @@ for k = 2:numel(plist) % el segundo punto es el primer "destino"
 
             for i = 1:N
                 q_next = ik_barista(R, Ts(i), q_intermedio, true);
-                R.animate(q_next');
+              
                 q_intermedio = q_next;  
                 q_tray_cart(i,:) = q_next';
                 if ~isempty(h_frame), delete(h_frame); end
@@ -112,9 +122,12 @@ for k = 2:numel(plist) % el segundo punto es el primer "destino"
                 h_frame = trplot(Ts(i), 'frame', '', 'color', 'g', 'length', 0.2,'width',0.2);
                 T_tcp = R.fkine(q_next');
                 set(h_frame, 'Matrix', T_tcp.double);
-                setappdata(fig,'h_tcp_frame', h_frame);
+                 if(animar)
+                    R.animate(q_next');
+                    setappdata(fig,'h_tcp_frame', h_frame);
                 
-                drawnow;
+                    drawnow;
+                end 
             end
             q_segmento = q_tray_cart;
             qd_tray_cart = diff(q_tray_cart)*N;
@@ -137,7 +150,7 @@ for k = 2:numel(plist) % el segundo punto es el primer "destino"
 
             for i = 1:t
                 q_next = ik_barista(R, Ts(i), q_intermedio, true);
-                R.animate(q_next');
+             
                 q_intermedio = q_next;
                 q_tray_cart(i,:) = q_next';
                 if ~isempty(h_frame), delete(h_frame); end
@@ -145,8 +158,12 @@ for k = 2:numel(plist) % el segundo punto es el primer "destino"
                 h_frame = trplot(Ts(i), 'frame', '', 'color', 'g', 'length', 0.2,'width',0.2);
                 T_tcp = R.fkine(q_next');
                 set(h_frame, 'Matrix', T_tcp.double);
+                   if(animar)
+                    R.animate(q_next');
+                   
                 setappdata(fig,'h_tcp_frame', h_frame);
                 drawnow;
+                   end
             end
             qd_tray_cart = diff(q_tray_cart)*N;
             % Agregar última fila de velocidades (cero)

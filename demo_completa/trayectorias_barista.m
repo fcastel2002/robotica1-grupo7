@@ -4,8 +4,9 @@ clc;
 run ('robot.m')
 %% OPCIONES DE DEBUG
 % cambiar a false si no se desean ver los modelos STL
-modelSTL = false;
-
+model_stl = false;
+global animar;
+animar = false;
 %%
 
 %% 0) Parámetros de animación
@@ -51,7 +52,7 @@ plist_R1 = {
 
     struct('pose', [0.499,      0,     0.6,  -0.01, pi/2+0.2, -0.01], 'tipo', 'cartesiana'),
 
-    struct('pose', [0.499, 0,     0.55, -0.01, pi/2+0.8,-0.01], 'tipo', 'cartesiana_fina'),
+    struct('pose', [0.499, 0,     0.55, -0.01, pi/2+0.5,-0.01], 'tipo', 'cartesiana_fina'),
 };
     
     %% ROBOT CAFETERO R2
@@ -154,7 +155,7 @@ end
 %% 3) Inicializar visualización
 figure(10); clf;
 
-if(modelSTL)
+if(model_stl)
     R1.plot3d(qseq_R1(:,1)', ...
         'workspace', workspace, ...
         'notiles', ...
@@ -205,19 +206,7 @@ groups_R2 = completar_grupos(groups_R2, N2);
 groups = {groups_R1, groups_R2};
 crear_gui([R1 R2], {plist_R1 plist_R2}, {Tlist_R1 Tlist_R2}, {qseq_R1 qseq_R2}, n, N, {groups_R1, groups_R2});
 
-% Botón adicional: Arte latte (corazón) para R1
-fig = gcf;
-x = 0.85; w = 0.12; h = 0.06; y = 0.72; % debajo del botón "Ejecutar TODO"
-uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
-    'Position',[x y w h], 'String','Arte latte (corazón)', ...
-    'FontSize',11, ...
-    'Callback', @(~,~) arte_latte_corazon(R1, [0.499 0 0.55], [0.01 pi/2+0.5 0]));
 
-% Botón de Ayuda (descripción de puntos de cada robot)
-uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
-    'Position',[0.44 0.05 0.12 0.06], 'String','Ayuda', ...
-    'FontSize',11, ...
-    'Callback', @(~,~) mostrar_ayuda());
 
 function mostrar_ayuda()
     % --- MODIFICADO --- : Añadido punto 1.2.5

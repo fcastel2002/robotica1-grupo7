@@ -4,10 +4,10 @@ if nargin < 5, n = 30; end
 if nargin < 6, N = 20; end
 if nargin < 7, groups = []; end
 fig = gcf;
- 
+% ====================================================================
 % Layout derecho simple robot 1
+% ====================================================================
 x = 0.85; w = 0.12; h = 0.06; dy = 0.08; y0 = 0.80;
-
 % Botón "Todo" R1 (Raw)
 uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
     'Position',[x y0 w h], 'String','Ejecutar TODO R1', ...
@@ -18,23 +18,45 @@ uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
 y_sync = y0 - dy/2; % un poco debajo
 uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
     'Position',[0.45 y_sync 0.18 h], 'String','Ejecutar Ambos (sync)', ...
-    'FontSize',11, ...
-    'Callback', @(~,~) ejecutar_ambos_sync(R, plist, Tlist, qseq, n, N));
+    'FontSize',11, 'FontWeight', 'bold', 'ForegroundColor', [0 0.5 0], ...
+    'Callback', @(~,~) ejecutar_ambos_sync(R));
 
 % --- 'y' se inicializa para el botón Optimizado ---
 y = y0 - dy; % 'y' empieza en 0.72
+try
+    % Asumimos que el arte latte se hace desde la última pose de R1
+    pose_final_R1 = plist{1}{end}.pose;
+    centro_xyz = pose_final_R1(1:3);
+    rpy_orient = pose_final_R1(4:6);
+catch
+    % Fallback por si acaso
+    warning('No se pudo leer la pose final de plist{1}. Usando valores por defecto para Arte Latte.');
+    centro_xyz = [0.5 0 0.55];
+    rpy_orient = [0 pi/2 0];
+end
+uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
+    'Position',[x y w h], 'String','Arte latte (corazón)', ...
+    'FontSize',11, 'FontWeight', 'bold', 'ForegroundColor', [0.8 0 0.4], ...
+    'Callback', @(~,~) callback_arte_latte(R(1), centro_xyz, rpy_orient));
+
 y = y - dy; % Mover 'y' hacia abajo DE NUEVO
 
-% --- NUEVO BOTÓN: Ejecutar Optimizado R1 ---
+% --- Botón: Ejecutar Optimizado R1 ---
 uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
     'Position',[x y w h], 'String','Ejecutar Optimizado R1', ...
     'FontSize',11, 'FontWeight', 'bold', 'ForegroundColor', [0 0 0.8], ... % Color azul
     'Callback', @(~,~) ejecutar_secuencia_toppra(R(1)));
-% --- FIN NUEVO ---
 
 % Botones agrupados o por segmento (raw)
-y = y - dy; % Mover 'y' (ahora y = 0.64) <-- Espacio para "Arte latte"
-if ~isempty(groups)
+y = y - dy; % Mover 'y' (ahora y = 0.64)
+
+% ===================================================================
+% --- INICIO DE MODIFICACIÓN LÓGICA (R1) ---
+% ===================================================================
+% Revisar si 'groups{1}' existe y tiene contenido
+use_groups_r1 = ~isempty(groups) && numel(groups) >= 1 && ~isempty(groups{1});
+
+if use_groups_r1
     % groups{1}: celdas con índices de plist{1}
     for g = 1:numel(groups{1})
         idxs = groups{1}{g};
@@ -47,6 +69,7 @@ if ~isempty(groups)
         y = y - dy;
     end
 else
+    % Si no se usan grupos para R1, usar plist{1}
     for k = 2:numel(plist{1})
     txt = sprintf('Punto %d → %d', k-1, k);
     uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
@@ -55,60 +78,38 @@ else
     y = y - dy;
     end
 end
+% ===================================================================
+% --- FIN DE MODIFICACIÓN LÓGICA (R1) ---
+% ===================================================================
 
+
+% ====================================================================
 % Layout izquierdo simple robot 2
-x = 0.03; w = 0.12; h = 0.06; dy = 0.08; y0 = 0.80;
-
-% Botón "Todo" R2 (Raw)
-uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
-    'Position',[x y0 w h], 'String','Ejecutar TODO R2', ...
-    'FontSize',11, ...
-    'Callback', @(~,~) ejecutar_trayectorias(R(2), plist{2}, Tlist{2}, qseq{2}, n, N));
-
-% --- NUEVO BOTÓN: Ejecutar Optimizado R2 ---
-y = y0 - dy; % Mover 'y' hacia abajo
-uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
-    'Position',[x y w h], 'String','Ejecutar Optimizado R2', ...
-    'FontSize',11, 'FontWeight', 'bold', 'ForegroundColor', [0 0 0.8], ... % Color azul
-    'Callback', @(~,~) ejecutar_secuencia_toppra(R(2)));
-% --- FIN NUEVO ---
-
-% Botones agrupados o por segmento para R2 (raw)
-y = y - dy; % Mover 'y' hacia abajo DE NUEVO
-if ~isempty(groups)
-    for g = 1:numel(groups{1})
-        idxs = groups{1}{g};
-        if isempty(idxs), continue; end
-        i0 = idxs(1); i1 = idxs(end);
-        etiqueta = sprintf('R1 %d -> %d', i0, i1);
-        uicontrol('Position',[x y w h],'String',etiqueta, ...
-            'Callback', @(~,~) ejecutar_grupo(R(1), plist{1}, Tlist{1}, qseq{1}, idxs),'Units','normalized');
-        y = y - dy;
-    end
-else
-    for k = 2:numel(plist{1})
-    txt = sprintf('Punto %d → %d', k-1, k);
-    uicontrol('Position',[x y w h],'String',txt, ...
-        'Callback', @(~,~) ejecutar_tramo(k,R(1),plist{1},Tlist{1},qseq{1}),'Units','normalized');
-    y = y - dy;
-    end
-end
-% Layout izquierdo simple robot 2
+% ====================================================================
 x = 0.03; w = 0.12; h = 0.06; dy = 0.08; y0 = 0.80;
 % Botón "Todo" R2 (Raw)
 uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
     'Position',[x y0 w h], 'String','Ejecutar TODO R2', ...
     'FontSize',11, ...
     'Callback', @(~,~) ejecutar_trayectorias(R(2), plist{2}, Tlist{2}, qseq{2}, n, N));
-% --- NUEVO BOTÓN: Ejecutar Optimizado R2 ---
+
+% --- Botón: Ejecutar Optimizado R2 ---
 y = y0 - dy; % Mover 'y' hacia abajo
 uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
     'Position',[x y w h], 'String','Ejecutar Optimizado R2', ...
     'FontSize',11, 'FontWeight', 'bold', 'ForegroundColor', [0 0 0.8], ...
     'Callback', @(~,~) ejecutar_secuencia_toppra(R(2)));
+
 % Botones agrupados o por segmento para R2 (raw)
 y = y - dy; % Mover 'y' hacia abajo DE NUEVO
-if ~isempty(groups)
+
+% ===================================================================
+% --- INICIO DE MODIFICACIÓN LÓGICA (R2) ---
+% ===================================================================
+% Revisar si 'groups{2}' existe y tiene contenido
+use_groups_r2 = ~isempty(groups) && numel(groups) >= 2 && ~isempty(groups{2});
+
+if use_groups_r2
     for g = 1:numel(groups{2})
         idxs = groups{2}{g};
         if isempty(idxs), continue; end
@@ -119,19 +120,56 @@ if ~isempty(groups)
         y = y - dy;
     end
 else
-for k = 2:numel(plist{2})
-    txt = sprintf('Punto R2 %d → %d', k-1, k);
-    uicontrol('Position',[x y w h],'String',txt, ...
-        'Callback', @(~,~) ejecutar_tramo(k,R(2),plist{2},Tlist{2},qseq{2}),'Units','normalized');
-    y = y - dy;
+    % Si no se usan grupos para R2, usar plist{2}
+    for k = 2:numel(plist{2})
+        txt = sprintf('Punto R2 %d → %d', k-1, k);
+        uicontrol('Position',[x y w h],'String',txt, ...
+            'Callback', @(~,~) ejecutar_tramo(k,R(2),plist{2},Tlist{2},qseq{2}),'Units','normalized');
+        y = y - dy;
     end
 end
-
+% ===================================================================
+% --- FIN DE MODIFICACIÓN LÓGICA (R2) ---
+% ===================================================================
 
 %% ====================================================================
 %% =================== FUNCIONES HELPER INTERNAS ======================
 %% ====================================================================
+    function callback_arte_latte(robot, centro_xyz, rpy_orient)
+        fprintf('--- Ejecutando Arte Latte (Corazón) ---\n');
+        cerrar_figuras_anteriores(); % Cerrar plots antiguos
 
+        % 1. Ejecutar la función (con animación) y obtener datos
+        % Asegurarse que 'arte_latte_corazon.m' esté en el path
+        try
+            % Llamamos con animar = true
+            [Q, t] = arte_latte_corazon(robot, centro_xyz, rpy_orient);
+        catch ME
+            if strcmp(ME.identifier, 'MATLAB:UndefinedFunction')
+                msgbox('Error: No se encuentra "arte_latte_corazon.m". Asegúrate de que esté en el path de MATLAB.', 'Error de Función', 'error');
+            else
+                rethrow(ME);
+            end
+            return;
+        end
+
+        if isempty(Q) || numel(t) < 2
+            warning('Arte latte no devolvió datos suficientes para graficar.');
+            return;
+        end
+
+        % 2. Calcular dt y Velocidades
+        dt = t(2) - t(1); % Asumir dt constante
+        % Calcular velocidad por diferencia finita
+        Qd = [zeros(1, robot.n); diff(Q)] / dt;
+
+        % 3. Graficar (usando el helper 'plot_q_evol' que ya existe)
+        plot_q_evol(Q, dt, sprintf('%s - Posiciones (Arte Latte)', robot.name));
+        plot_q_evol(Qd, dt, sprintf('%s - Velocidades (Arte Latte)', robot.name));
+
+        fprintf('--- Arte Latte completado y graficado ---\n');
+        figure(fig); % Traer la GUI al frente
+    end
     function cerrar_figuras_anteriores()
         % (Función sin cambios)
         figs = findall(0, 'Type', 'figure');
@@ -191,14 +229,14 @@ end
             [script_dir, ~, ~] = fileparts(mfilename('fullpath'));
             output_dir = fullfile(script_dir, 'raw_trajectories');
             
-            % --- ¡¡IMPORTANTE!! ---
-            % Revisa que estos índices (9 y 10) coincidan con el final
-            % de tu secuencia en 'trayectorias_barista.m'.
-            % plist_R1 tiene 10 elementos (0 a 9). El último es 'cartesiana_fina'.
-            % El 'arte latte' sería el siguiente paso.
-            % plist{10} es el índice 9. Por lo tanto, el arte es 9->10.
-            start_idx = 9; 
-            end_idx = 10;
+            % ========================================================
+            % --- INICIO DE MODIFICACIÓN (Req. 2) ---
+            % Cambiado de 9-10 a 10-11
+            start_idx = 10; 
+            end_idx = 11;
+            % --- FIN DE MODIFICACIÓN ---
+            % ========================================================
+            
             nombre_archivo_base = sprintf('%s_rawtraj_%d-%d.mat', R.name, start_idx, end_idx);
             nombre_archivo_completo = fullfile(output_dir, nombre_archivo_base);
             
@@ -215,38 +253,33 @@ end
         end
     end
 % --------------------------------------------------------------------
-    function ejecutar_ambos_sync(R_all)
+function ejecutar_ambos_sync(R_all)
         % ===============================================================
-        % --- ¡¡FUNCIÓN COMPLETAMENTE NUEVA (ORQUESTADOR)!! ---
+        % --- ¡¡FUNCIÓN MODIFICADA (ORQUESTADOR)!! ---
         % ===============================================================
         
         fprintf('\n--- Iniciando ejecución Sincrónica OPTIMIZADA (Toppra) ---\n');
         R1 = R_all(1);
         R2 = R_all(2);
         
-        % --- 1. Definición de la Secuencia (¡MODIFICA AQUÍ!) ---
-        % Define el plan para cada robot.
-        % { 'segmento', 'nombre_archivo.mat' }
-        % { 'delay', segundos }
-        
+        % --- 1. Definición de la Secuencia (Sin cambios) ---
         plan_R1 = {
-            { 'segmento', [R1.name, '_toppratraj_0-1.mat'] },
+           % { 'segmento', [R1.name, '_toppratraj_0-1.mat'] },
             { 'segmento', [R1.name, '_toppratraj_1-2.mat'] },
-            { 'delay', 2.0 }, % <--- Delay de ejemplo R1
             { 'segmento', [R1.name, '_toppratraj_2-3.mat'] },
             { 'segmento', [R1.name, '_toppratraj_3-4.mat'] },
+            { 'delay', 10.0 }, % espera a que se espume la leche
             { 'segmento', [R1.name, '_toppratraj_4-5.mat'] },
             { 'segmento', [R1.name, '_toppratraj_5-6.mat'] },
             { 'segmento', [R1.name, '_toppratraj_6-7.mat'] },
             { 'segmento', [R1.name, '_toppratraj_7-8.mat'] },
             { 'segmento', [R1.name, '_toppratraj_8-9.mat'] },
             { 'delay', 5.0 }, % <--- R1 espera a que R2 entregue la taza
-            { 'segmento', [R1.name, '_toppratraj_9-10.mat'] } % <-- Arte Latte
+            { 'segmento', [R1.name, '_toppratraj_9-10.mat'] }, % <-- Movimiento a la taza
+            { 'segmento', [R1.name, '_rawtraj_10-11.mat'] } % <-- Arte Latte
         };
-        
-        % Nota: Tu plist_R2 tiene 15 elementos (0-14).
         plan_R2 = {
-            { 'segmento', [R2.name, '_toppratraj_0-1.mat'] },
+            %{ 'segmento', [R2.name, '_toppratraj_0-1.mat'] },
             { 'segmento', [R2.name, '_toppratraj_1-2.mat'] },
             { 'segmento', [R2.name, '_toppratraj_2-3.mat'] },
             { 'segmento', [R2.name, '_toppratraj_3-4.mat'] },
@@ -258,13 +291,13 @@ end
             { 'segmento', [R2.name, '_toppratraj_8-9.mat'] },
             { 'segmento', [R2.name, '_toppratraj_9-10.mat'] },
             { 'segmento', [R2.name, '_toppratraj_10-11.mat'] },
+            { 'delay', 10.0 }, % espera a que se haga el cafe luego de apretar el boton
             { 'segmento', [R2.name, '_toppratraj_11-12.mat'] },
             { 'segmento', [R2.name, '_toppratraj_12-13.mat'] },
             { 'segmento', [R2.name, '_toppratraj_13-14.mat'] }
-            % R2 termina y se queda quieto
         };
         
-        % --- 2. Cargar TODAS las trayectorias en memoria ---
+        % --- 2. Cargar TODAS las trayectorias (Sin cambios) ---
         try
             [trajectories_R1, q_inicial_R1] = load_trajectory_data(R1, plan_R1);
             [trajectories_R2, q_inicial_R2] = load_trajectory_data(R2, plan_R2);
@@ -273,7 +306,7 @@ end
             return;
         end
         
-        % --- 3. Inicializar Estados ---
+        % --- 3. Inicializar Estados (Sin cambios) ---
         state_R1 = init_robot_state(q_inicial_R1);
         state_R2 = init_robot_state(q_inicial_R2);
         
@@ -283,33 +316,71 @@ end
         pause(1.0); % Pausa para ver
         
         % --- 4. Bucle de Simulación Asíncrono ---
-        dt = 0.01; % Paso de simulación (100 Hz)
+        dt = 0.05; % Paso de simulación (100 Hz)
         t_sim = 0;
         t_start = tic;
         
+        % ========================================================
+        % --- INICIO DE MODIFICACIÓN (Rendimiento) ---
+        
+        % Un 'anim_decim' de 5 da 20 FPS (100 Hz / 5). Es un buen balance.
+        anim_decim = 3; 
+        anim_count = 0;
+        
+        % Umbral mínimo para pausas (evita 'pause(0.0001)')
+        min_pause_duration = 0.002; % 2ms
+        
+        % --- FIN DE MODIFICACIÓN ---
+        % ========================================================
+
         while ~state_R1.finished || ~state_R2.finished
             
             t_real = toc(t_start);
             
-            % Sincronizar: si el bucle corre más rápido que el tiempo real,
-            % hace una pausa.
-            if t_real < t_sim
-                pause(t_sim - t_real);
-                continue;
+            % ========================================================
+            % --- INICIO DE MODIFICACIÓN (Lógica de Pausa) ---
+            
+            t_wait = t_sim - t_real; % Tiempo que falta para el prox. paso
+
+            if t_wait > 0
+                
+                if t_wait > min_pause_duration
+                    pause(t_wait);
+                end
+
+                continue; 
             end
+            
+            % Si llegamos aquí, es porque t_real >= t_sim
+            % (Vamos a tiempo o ATRASADOS, no hay tiempo para pausar)
+            
+            % --- FIN DE MODIFICACIÓN ---
+            % ========================================================
             
             % Avanzar el tiempo de simulación
             t_sim = t_sim + dt;
+            anim_count = anim_count + 1;
             
             % Actualizar el estado de cada robot de forma independiente
             [state_R1, q_R1] = update_robot_state(state_R1, plan_R1, trajectories_R1, dt);
             [state_R2, q_R2] = update_robot_state(state_R2, plan_R2, trajectories_R2, dt);
             
-            % Animar
-            R1.animate(q_R1);
-            R2.animate(q_R2);
-            drawnow limitrate;
+            % ========================================================
+            % --- INICIO DE MODIFICACIÓN (Lógica de Dibujo) ---
+            if mod(anim_count, anim_decim) == 0
+                R1.animate(q_R1);
+                R2.animate(q_R2);
+
+                drawnow; 
+            end
+            % --- FIN DE MODIFICACIÓN ---
+            % ========================================================
         end
+        
+        % Asegurar que los robots terminen en la última postura (gráficamente)
+        R1.animate(state_R1.last_q);
+        R2.animate(state_R2.last_q);
+        drawnow;
         
         fprintf('--- ¡Simulación Sincrónica Completada! ---\n');
     end
@@ -340,7 +411,7 @@ end
     end
 % --------------------------------------------------------------------
     function ejecutar_secuencia_toppra(robot_a_ejecutar)
-        % (Función sin cambios, la que ya graficaba)
+        % (Función sin cambios)
         fprintf('\n--- Iniciando ejecución de secuencia optimizada (TOPPRA) para %s ---\n', robot_a_ejecutar.name);
         prefijo_robot = robot_a_ejecutar.name;
         try
@@ -440,11 +511,16 @@ end
 
 % --- NUEVOS HELPERS PARA EL ORQUESTADOR ---
     function [map, q0] = load_trajectory_data(robot, plan)
+        % (Función sin cambios)
         % Carga todos los .mat necesarios para un plan en un mapa
         map = containers.Map('KeyType','char','ValueType','any');
         q0 = [];
         
-        [script_dir, ~, ~] = fileparts(mfilename('fullpath'));
+        try
+            [script_dir, ~, ~] = fileparts(mfilename('fullpath'));
+        catch
+            script_dir = pwd;
+        end
         directorio_toppra = fullfile(script_dir, 'toppra_trajectories');
 
         for i = 1:numel(plan)
@@ -468,10 +544,12 @@ end
         end
         if isempty(q0)
            q0 = zeros(1, robot.n); % Fallback
+           warning('No se cargó ningún segmento para %s. Usando q0 = [0...0]', robot.name);
         end
     end
 
     function [state] = init_robot_state(q_inicial)
+        % (Función sin cambios)
         % Crea la estructura de estado inicial para un robot
         state = struct(...
             'plan_index', 1, ...         % Siguiente paso a ejecutar
@@ -485,6 +563,7 @@ end
     end
 
     function [state, q] = update_robot_state(state, plan, trajectories, dt)
+        % (Función sin cambios)
         % El "cerebro": actualiza el estado de UN robot para un paso de tiempo dt
         
         % Si el plan terminó, no hacer nada y devolver la última q
