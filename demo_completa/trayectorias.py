@@ -17,37 +17,30 @@ print(f"Directorio de salida asegurado: {OUTPUT_DIR}")
 
 # ==============================================================================
 # --- 3. Definir PERFILES de Restricciones ---
-#    (¡Aquí defines TUS perfiles de robot!)
-#
-#    Añade aquí todos los conjuntos de límites que necesites.
-#    Usa una clave (string) fácil de recordar para cada uno.
 # ==============================================================================
 
-# Perfil 1: Límites por defecto (Robot 1, ej: los que ya tenías)
 perfil_robot1_default = {
     'vlim_abs': np.array([1.8, 1.8, 1.8, 1.0, 0.8, 0.8]),
     'alim_abs': np.array([1.0, 1.5, 1.5, 1.0, 1.0, 1.0])
 }
 
-# Perfil 2: Límites para "Cafe" (Robot 1, más lentos)
 perfil_robot1_cafe_special = {
     'vlim_abs': np.array([1.0, 1.0, 1.0, 0.5, 2, 2]), # Más lento
     'alim_abs': np.array([1, 1, 1, 0.5, 0.5, 0.5])  # Más suave
 }
 
-# Perfil 3: Límites para Robot 2 (ejemplo)
 perfil_robot2_articularq5 = {
     'vlim_abs': np.array([1.8, 1.8, 1.8, 1.0, 0.3, 0.8]),
     'alim_abs': np.array([1.0, 1.5, 1.5, 1.0, 1.0, 1.0])
 }
 
 # --- Contenedor de todos los perfiles ---
-#   (Este diccionario agrupa todos los perfiles de arriba)
+#  
 LIMIT_PROFILES = {
     'robot1_default': perfil_robot1_default,
     'robot1_cafe': perfil_robot1_cafe_special,
     'robot2_articularq5': perfil_robot2_articularq5
-    # ... añade más perfiles aquí si los creas
+   
 }
 
 # ==============================================================================
@@ -127,7 +120,7 @@ for input_filepath in input_files:
         alim = np.vstack([-alim_abs, alim_abs]).T
         # ---------------------------------------------------
 
-        # --- 6.4. BLOQUE: Suavizado condicional (sin cambios) ---
+        # --- 6.4. BLOQUE: Suavizado condicional ---
         if is_special_traj:
             print("*** Aplicando filtro de suavizado (Savitzky-Golay) a '10-11' ***")
             window_len = 51
