@@ -1,4 +1,4 @@
-function Q = ik_barista(R, T, q0, q_mejor,debug)
+function Q = ik_barista(R, T, q0, q_mejor,debug_flag)
 % CIN_INV_BARISTA  Cinemática inversa (6R, muñeca esférica) tipo IRB-120.
 % Uso:
 %   Q = cin_inv_barista(R, T, q0, q_mejor)
@@ -14,9 +14,9 @@ function Q = ik_barista(R, T, q0, q_mejor,debug)
 % cinemático (método de Pieper) para muñeca esférica.
     if nargin < 4
         q_mejor = false;
-        debug = false;
+        debug_flag = false;
     elseif nargin < 5
-        debug = false;
+        debug_flag = false;
     end
     
     if isa(T, 'SE3')
@@ -80,7 +80,7 @@ function Q = ik_barista(R, T, q0, q_mejor,debug)
     q_sols_13(3,:) = [     q3(1)      q3(1)      q3(2)      q3(2)      q3(1)      q3(1)      q3(2)      q3(2)];
     
     %% Primer verificacion posicion muñeca
-    if(debug)
+    if(debug_flag)
         disp('Verificación centro de muñeca :')
         fprintf('> pwrist:'); disp(pwrist')
         for i=1:8
@@ -101,7 +101,7 @@ function Q = ik_barista(R, T, q0, q_mejor,debug)
        q1 = q_sols_13(1,i);
        q2 = q_sols_13(2,i);
        q3 = q_sols_13(3,i);
-       [q4,q5,q6] = calcular_orient(R, q1,q2,q3, T, q0);
+       [q4,q5,q6] = calcular_orient(R, q1,q2,q3, T, q0,debug_flag);
        q_sols_46(1:3, i:i+1) = [q4;q5;q6];
    end
    qq = q_sols_13;
@@ -110,13 +110,14 @@ function Q = ik_barista(R, T, q0, q_mejor,debug)
    R.offset = offsets;
    qq = qq - R.offset' * ones(1,8);
    
-   if(debug)
+   if(debug_flag)
        disp("Verificacion pos+orientacion: ");
        fprintf('> T: ');
        disp([tr2rpy(T), transl(T)'])
+   
        for i=1:8
            Taux = R.fkine(qq(:,i));
-           fprintf('> %d:',i);''
+           fprintf('> %d:',i);
            disp([Taux.tr2rpy, Taux.transl]);
        end
    end
@@ -125,25 +126,33 @@ function Q = ik_barista(R, T, q0, q_mejor,debug)
 
 end
 % ===== Helpers locales =====
-function [q4,q5,q6] = calcular_orient(R, q1,q2,q3, T,q0)
+function [q4,q5,q6] = calcular_orient(R, q1,q2,q3, T,q0,debug_flag)
     T1 = R.links(1).A(q1).double;
     T2 = R.links(2).A(q2).double;
     T3 = R.links(3).A(q3).double;
     T36 = invHomog(T3) * invHomog(T2) * invHomog(T1) * T; %dato del problema
     % disp(T36(3,3));  % Comentado para evitar salida en command window
     % caso degenerado
-    if(abs(abs(T36(3,3)-1))<20e-4)
+    if(abs(abs(T36(3,3)-1))<10e-3)
         % asumimos q4 igual al anterior para resolver las infinitas
         % soluciones
+        if(debug)
         disp("singularidad eje 6 y 4 alineado")
-        q4(1) = q0(4); %q0 es el vector que le paso
+        disp(T36(3,3));
+        end
+        total_rotation = atan2(T36(2,1), T36(1,1));
+        q4(1) = total_rotation / 2; %q0 es el vector que le paso
+        disp(q0(5));
         q5(1) = 0;
-        q6(1) = atan2(T36(2,1), T36(1,1)) - q4(1);
+        q6(1) = total_rotation / 2;
         q4(2) = q4(1);
-        q5(2) = 0;
+        q5(2) = q5(1);
         q6(2) = q6(1);
     else
-        disp("normal")
+        if(debug_flag)
+            disp("normal")
+            disp(T36(3,3));
+        end
         q4(1) = atan2(-T36(2,3), -T36(1,3));
         if q4(1) > 0
             q4(2) = q4(1) - pi;
@@ -159,14 +168,22 @@ function [q4,q5,q6] = calcular_orient(R, q1,q2,q3, T,q0)
             q5(i) = atan2(T6(2,3), T6(1,3)) - pi/2;
             T5 = R.links(5).A(q5(i)).double;
             T6 = invHomog(T5) * T6;
+            
             q6(i) = atan2(T6(2,1),T6(1,1));
+            overflow = q6(i) - q0(6);
+            if(overflow > pi)
+                q6(i) = q6(i) - 2*pi;
+
+            else if(overflow < -pi)
+
+                q6(i) = q6(i) + 2*pi;
+                
+            end
+            end
+
         end
 
     end
-
-
-
-
 end
 function Ti = invHomog(T)
     if isa(T,'SE3'), T = T.double; end

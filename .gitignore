@@ -1,6 +1,7 @@
 .vs/
 libros/
 trabajo final/
+**/.venv/
 
 # Archivos CAD / pesados
 *.SLDASM
