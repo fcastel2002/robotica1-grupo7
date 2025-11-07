@@ -177,7 +177,7 @@ function handles = barista_callbacks(fig, R, plist, Tlist, qseq, n, N, groups)
             { 'segmento', [R1_sync.name, '_toppratraj_8-9.mat'] },
             { 'delay', 5.0 }, 
             { 'segmento', [R1_sync.name, '_toppratraj_9-10.mat'] }, 
-            { 'segmento', [R1_sync.name, '_rawtraj_10-11.mat'] } 
+            { 'segmento', [R1_sync.name, '_toppratraj_10-11.mat'] } 
         };
         plan_R2 = {
             { 'segmento', [R2_sync.name, '_toppratraj_1-2.mat'] },

@@ -58,7 +58,7 @@ PROFILE_MAP = [
     ('Cafe_rawtraj_1-2', 'robot1_cafe'), # Si el archivo contiene "Cafe_rawtraj_1-2"
     ('Cafe_rawtraj_2-3', 'robot1_cafe'), # Si el archivo contiene "Cafe_rawtraj_2"
 
-    ('Leche_rawtraj_7-8', 'robot2_default'),
+    ('Leche_rawtraj_7-8', 'robot2_articularq5'),
     
     # Ejemplo: Asignar archivos de "Cafe" (que no sean 1 o 2) al default
     ('cafe_traj', 'robot1_default'), # Esta regla debe ir DESPUÉS de las específicas
