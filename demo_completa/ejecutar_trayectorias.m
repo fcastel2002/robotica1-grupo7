@@ -6,6 +6,10 @@ function ejecutar_trayectorias(R, plist, Tlist, qseq, n, N,TF)
 %   N                       -> puntos de interpolación cartesiana
 %% DEBUG
     global animar;
+    
+    % flag de scope local para guardar sobreescribir o no los archivos
+    % rawtraj.
+    nuevas_trayectorias = false;
 %%
 %% Aclaracion respecto a las trayectorias
 % Las trayectorias generadas en este archivo son las que finalmente el
@@ -184,25 +188,27 @@ for k = 2:numel(plist) % el segundo punto es el primer "destino"
         otherwise
             warning('Tipo de movimiento "%s" no reconocido. Saltando segmento.', tipo_movimiento);
     end
-    if ~isempty(q_segmento)
-        waypoints_q = q_segmento;
-        num_muestras = size(waypoints_q, 1);
-        path_pos_s = linspace(0, 1, num_muestras)';
+    if(nuevas_trayectorias)
+        if ~isempty(q_segmento)
+            waypoints_q = q_segmento;
+            num_muestras = size(waypoints_q, 1);
+            path_pos_s = linspace(0, 1, num_muestras)';
 
-        % nombre de archivo
-        robot_prefix = R.name;
-        start_idx = k-1;
-        end_idx = k;
-        nombre_archivo_base = sprintf('%s_rawtraj_%d-%d.mat', robot_prefix, start_idx, end_idx);
-        nombre_archivo_completo = fullfile(output_dir, nombre_archivo_base);
-        try
-            save(nombre_archivo_completo, 'waypoints_q', "path_pos_s");
-        catch e
-            fprintf('Error al guardar %s: %s\n', nombre_archivo_base);
+            % nombre de archivo
+            robot_prefix = R.name;
+            start_idx = k-1;
+            end_idx = k;
+            nombre_archivo_base = sprintf('%s_rawtraj_%d-%d.mat', robot_prefix, start_idx, end_idx);
+            nombre_archivo_completo = fullfile(output_dir, nombre_archivo_base);
+            try
+                save(nombre_archivo_completo, 'waypoints_q', "path_pos_s");
+            catch e
+                fprintf('Error al guardar %s: %s\n', nombre_archivo_base);
+            end
+
+        elseif ~strcmp(tipo_movimiento, 'toppra') && k>1
+            fprintf('Trayectoria ya optimizada, no se genero ninguna nueva.');
         end
-
-    elseif ~strcmp(tipo_movimiento, 'toppra') && k>1
-        fprintf('Trayectoria ya optimizada, no se genero ninguna nueva.');
     end
     pause(0.5);
     q_curr = qseq(:,k);

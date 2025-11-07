@@ -16,7 +16,7 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 print(f"Directorio de salida asegurado: {OUTPUT_DIR}")
 
 # --- 3. Definir Restricciones del Robot (una sola vez) ---
-vlim_abs = np.array([2.0, 2.0, 2.0, 1.0, 1.0, 1.0]) 
+vlim_abs = np.array([1.8, 1.8, 1.8, 1.0, 0.3, 0.3]) 
 vlim = np.vstack([-vlim_abs, vlim_abs]).T
 alim_abs = np.array([1.0, 1.5, 1.5, 1.0, 1.0, 1.0])
 alim = np.vstack([-alim_abs, alim_abs]).T
