@@ -1,5 +1,4 @@
-function ejecutar_toppra(R, archivo_mat, plot_results)
-% Ejecuta una trayectoria optimizada desde un archivo .mat
+function [q_seg, qd_seg, qdd_seg] = ejecutar_toppra(R, archivo_mat, plot_results)% Ejecuta una trayectoria optimizada desde un archivo .mat
 %
 % ENTRADAS:
 %   R             - Handle del robot (ej: R1)
@@ -48,68 +47,69 @@ if isempty(h_frame) || ~isgraphics(h_frame)
     setappdata(fig,'h_tcp_frame', h_frame);
 end
 
-% --- Parámetros de rendimiento ---
-dt         = mean(diff(ts));
-traj_hz    = 1/dt;
-decim_draw = 2;    % dibujar cada 2 muestras (ajusta si es necesario)
-tcp_stride = 4;    % actualizar visual del TCP cada 4 muestras
-% fprintf('dt=%.4f s (%.1f Hz) | decim_draw=%d | tcp_stride=%d\n', dt, traj_hz, decim_draw, tcp_stride);
 
-% --- Animación cronometrada ---
-t0 = tic;
-i  = 1; 
-N  = size(q_traj,1);
+if(animar)
+    % --- Parámetros de rendimiento ---
+    % dt         = mean(diff(ts)); % (No se usa, pero se podría)
+    decim_draw = 2;    % dibujar cada 2 muestras (ajusta si es necesario)
+    tcp_stride = 4;    % actualizar visual del TCP cada 4 muestras
 
-while i <= N
-    % Sincroniza con el tiempo físico de la trayectoria
-    t_esp  = ts(i);
-    t_real = toc(t0);
-    if t_real < t_esp
-        pause(t_esp - t_real);
-    end
+    % --- Animación cronometrada ---
+    t0 = tic;
+    i  = 1; 
+    N  = size(q_traj,1);
 
-    % Actualiza robot
-    qi = q_traj(i,:);
-    if(animar)
-        R.animate(qi);
-    end
-    if mod(i, tcp_stride) == 1
-        T = R.fkine(qi);
-        if isa(T,'SE3'), T = T.T; end
-        if(animar)
-        set(h_frame, 'Matrix', T);
+    while i <= N
+        % Sincroniza con el tiempo físico de la trayectoria
+        t_esp  = ts(i);
+        t_real = toc(t0);
+        if t_real < t_esp
+            % Esta pausa AHORA solo ocurre si animar == true
+            pause(t_esp - t_real);
         end
 
+        % Actualiza robot
+        qi = q_traj(i,:);
+        R.animate(qi); % Ya no se necesita 'if(animar)' aquí dentro
+        
+        if mod(i, tcp_stride) == 1
+            T = R.fkine(qi);
+            if isa(T,'SE3'), T = T.T; end
+            set(h_frame, 'Matrix', T);
+            drawnow limitrate nocallbacks
+        end
+
+        i = i + decim_draw;
     end
+    
+    % Asegura que el robot termine en la última postura
+    R.animate(q_traj(end,:));
+    T = R.fkine(q_traj(end,:));
+    if isa(T,'SE3'), T = T.T; end
+    set(h_frame, 'Matrix', T);
+    drawnow;
+    
+    % fprintf('Animación completada. Duración real: %.3f s (ts(end)=%.3f s)\n', toc(t0), ts(end));
 
-    drawnow limitrate nocallbacks
-    i = i + decim_draw;
+else
+    % --- animar == false ---
+    % No animamos, solo saltamos el robot al final de ESTE segmento
+    % para que el siguiente segmento (si lo hay) empiece bien.
+    fprintf('Animación omitida (animar=false). Saltando al final del segmento.\n');
+    q_final = q_traj(end,:);
+    R.animate(q_final);
+    T = R.fkine(q_final);
+    if isa(T,'SE3'), T = T.T; end
+    set(h_frame, 'Matrix', T);
+    drawnow;
 end
-% Asegura que el robot termine en la última postura
-R.animate(q_traj(end,:));
-T = R.fkine(q_traj(end,:));
-if isa(T,'SE3'), T = T.T; end
-set(h_frame, 'Matrix', T);
-drawnow;
 
-% fprintf('Animación completada. Duración real: %.3f s (ts(end)=%.3f s)\n', toc(t0), ts(end));
 
-% --- Gráficos (solo si se piden) ---
+% --- Gráficos ---
 if plot_results
-    robot_name = R.name;
-    labels = arrayfun(@(k) sprintf('q%d',k), 1:size(q_traj,2), 'UniformOutput', false);
-
-    fig1 = figure(); set(fig1,'Name',sprintf('%s - Posiciones (Toppra)',robot_name));
-    plot(ts, q_traj); grid on; legend(labels{:}, 'Location','best');
-    title(sprintf('%s - q1..q6 (Toppra)', robot_name)); xlabel('Tiempo (s)'); ylabel('rad');
-    
-    fig2 = figure(); set(fig2,'Name',sprintf('%s - Velocidades (Toppra)',robot_name));
-    plot(ts, qd_traj); grid on; legend(labels{:}, 'Location','best');
-    title(sprintf('%s - dq1..dq6 (Toppra)', robot_name)); xlabel('Tiempo (s)'); ylabel('rad/s');
-    
-    fig3 = figure(); set(fig3,'Name',sprintf('%s - Aceleraciones (Toppra)',robot_name));
-    plot(ts, qdd_traj); grid on; legend(labels{:}, 'Location','best');
-    title(sprintf('%s - ddq1..ddq6 (Toppra)', robot_name)); xlabel('Tiempo (s)'); ylabel('rad/s^2');
+    graficar_perfiles(R.name, q_traj, qd_traj, qdd_traj, []);
 end
-
+q_seg = q_traj;
+qd_seg = qd_traj;
+qdd_seg = qdd_traj;
 end

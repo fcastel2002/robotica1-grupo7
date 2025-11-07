@@ -1,4 +1,4 @@
-function graficar_perfiles(robot_name, q, qd, qdd, seg_bounds)
+function grafic(robot_name, q, qd, qdd, seg_bounds)
 % PLOT_UNIFIED_PROFILES Crea gráficos estandarizados por MUESTRAS.
 %
 % ENTRADAS:

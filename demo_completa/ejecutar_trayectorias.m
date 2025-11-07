@@ -7,7 +7,12 @@ function ejecutar_trayectorias(R, plist, Tlist, qseq, n, N,TF)
 %% DEBUG
     global animar;
 %%
-
+%% Aclaracion respecto a las trayectorias
+% Las trayectorias generadas en este archivo son las que finalmente el
+% robot ejecutará. Más bien, se usaron como base para crear las
+% trayectorias elementales, luego estás son posprocesadas usando la
+% libreria "toppra" en python, este manejo se realiza a través de archivos
+% .mat 
 if nargin < 5, n = 30; end
 if nargin < 6, N = 20; end
 if nargin < 7, TF = 0.5; end
@@ -207,38 +212,10 @@ end
 if ~isempty(Q_completo)
     robot_name = R.name;
     
-    colors = lines(6);
-    labels = arrayfun(@(i) sprintf('q%d',i), 1:6, 'UniformOutput', false);
-    
-    % Ventana 1: Posiciones (nueva ventana sin número específico)
-    fig1 = figure();
-    set(fig1, 'Name', sprintf('%s - Posiciones', robot_name));
-    hold on; grid on;
-    for i=1:6
-        plot(Q_completo(:,i), 'Color', colors(i,:), 'LineWidth',1.2);
+    if ~isempty(seg_bounds) && seg_bounds(end) >= size(Q_completo, 1)
+        seg_bounds(end) = [];
     end
-    legend(labels{:}, 'Location','best');
-    title(sprintf('%s - q1..q6', robot_name));
-    xlabel('muestra'); ylabel('rad');
-    % Marcar límites de segmentos
-    for i=1:numel(seg_bounds)
-        xline(seg_bounds(i), 'r--', 'HandleVisibility','off');
-    end
-    
-    % Ventana 2: Velocidades (nueva ventana sin número específico)
-    fig2 = figure();
-    set(fig2, 'Name', sprintf('%s - Velocidades', robot_name));
-    hold on; grid on;
-    for i=1:6
-        plot(Qd_completo(:,i), 'Color', colors(i,:), 'LineWidth',1.2);
-    end
-    legend(labels{:}, 'Location','best');
-    title(sprintf('%s - dq1..q6', robot_name));
-    xlabel('muestra'); ylabel('rad/s');
-    % Marcar límites de segmentos
-    for i=1:numel(seg_bounds)
-        xline(seg_bounds(i), 'r--', 'HandleVisibility','off');
-    end
+    graficar_perfiles(robot_name, Q_completo, Qd_completo, [], seg_bounds);
 end
 
 disp('Trayectoria completada ');

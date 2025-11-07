@@ -3,10 +3,18 @@ close all;
 clc;
 run ('robot.m')
 %% OPCIONES DE DEBUG
-% cambiar a false si no se desean ver los modelos STL
-model_stl = false;
 global animar;
+global demo_tareas;
+
+
+% flag local, cambiar a false si no se desean ver los modelos STL
+model_stl = false;
+
+% flag de animación (se muestra gráficas pero no se ejecutan animaciones)
 animar = true;
+% flag de muestra, habilita o deshabilita los botones de trayectorias
+% individuales para depuracion.
+demo_tareas = true;
 %%
 
 %% 0) Parámetros de animación
@@ -28,7 +36,8 @@ N  = 20;      % puntos de interpolación cartesiana6
 % ROLL -> ALREDEDOR DE EJE X
 % PITCH -> ALREDEDOR DE EJE Y
 % YAW -> ALREDEDOR DE EJE Z
-
+% ---
+% 
 %% TRAYECTORIAS
     %% ROBOT LECHE R1 
 plist_R1 = {
