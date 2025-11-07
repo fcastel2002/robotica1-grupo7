@@ -11,7 +11,7 @@ global demo_tareas;
 model_stl = false;
 
 % flag de animación (se muestra gráficas pero no se ejecutan animaciones)
-animar = true;
+animar = false;
 % flag de muestra, habilita o deshabilita los botones de trayectorias
 % individuales para depuracion.
 demo_tareas = true;
