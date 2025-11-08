@@ -9,7 +9,7 @@ function ejecutar_trayectorias(R, plist, Tlist, qseq, n, N,TF)
     
     % flag de scope local para guardar sobreescribir o no los archivos
     % rawtraj.
-    nuevas_trayectorias = true;
+    nuevas_trayectorias = false;
 %%
 %% Aclaracion respecto a las trayectorias
 % Las trayectorias generadas en este archivo son las que finalmente el
