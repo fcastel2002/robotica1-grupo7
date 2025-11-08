@@ -171,11 +171,14 @@ function handles = barista_callbacks(fig, R, plist, Tlist, qseq, n, N, groups)
             { 'segmento', [R1_sync.name, '_toppratraj_3-4.mat'] },
             { 'delay', 10.0 }, 
             { 'segmento', [R1_sync.name, '_toppratraj_4-5.mat'] },
+            { 'delay', 3.0 }, 
             { 'segmento', [R1_sync.name, '_toppratraj_5-6.mat'] },
+            { 'delay', 3.0 }, 
             { 'segmento', [R1_sync.name, '_toppratraj_6-7.mat'] },
             { 'segmento', [R1_sync.name, '_toppratraj_7-8.mat'] },
+            { 'delay', 3.0 }, 
             { 'segmento', [R1_sync.name, '_toppratraj_8-9.mat'] },
-            { 'delay', 5.0 }, 
+            { 'delay', 6.0 }, 
             { 'segmento', [R1_sync.name, '_toppratraj_9-10.mat'] }, 
             { 'segmento', [R1_sync.name, '_toppratraj_10-11.mat'] } 
         };
