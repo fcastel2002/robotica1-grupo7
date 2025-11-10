@@ -75,7 +75,7 @@ else
     x = 0.85; w = 0.12; %
     % Botón "Todo" R1 (Raw)
     uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
-        'Position',[x y0 w h], 'String','Ejecutar TODO R1', ... %
+        'Position',[x y0 w h], 'String','Ejecutar R1', ... %
         'FontSize',11, ...
         'Callback', @handles.ejecutar_todo_r1); %
 
@@ -143,7 +143,7 @@ else
     x = 0.03; w = 0.12; %
     % Botón "Todo" R2 (Raw)
     uicontrol('Parent',fig,'Style','pushbutton','Units','normalized', ...
-        'Position',[x y0 w h], 'String','Ejecutar TODO R2', ... %
+        'Position',[x y0 w h], 'String','Ejecutar R2', ... %
         'FontSize',11, ...
         'Callback', @handles.ejecutar_todo_r2); %
 

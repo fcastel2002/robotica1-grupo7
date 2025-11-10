@@ -1,5 +1,4 @@
-function ejecutar_trayectorias(R, plist, Tlist, qseq, n, N,TF)
-% Ejecuta los segmentos según la lógica original.
+function [Q_completo, Qd_completo, seg_bounds] = ejecutar_trayectorias(R, plist, Tlist, qseq, n, N, TF, do_plot)
 % Entradas:
 %   R, plist, Tlist, qseq   -> mismos objetos del script
 %   n                       -> muestras por segmento articular
@@ -20,7 +19,7 @@ function ejecutar_trayectorias(R, plist, Tlist, qseq, n, N,TF)
 if nargin < 5, n = 30; end
 if nargin < 6, N = 20; end
 if nargin < 7, TF = 0.5; end
-
+if nargin < 8, do_plot = true; end
 q_curr = qseq(:,1);
 fig = gcf;
 h_ant = getappdata(fig,'h_tcp_frame');
@@ -215,7 +214,7 @@ for k = 2:numel(plist) % el segundo punto es el primer "destino"
 end
 
 % Graficar trayectorias completas en ventanas nuevas
-if ~isempty(Q_completo)
+if ~isempty(Q_completo) && do_plot
     robot_name = R.name;
     
     if ~isempty(seg_bounds) && seg_bounds(end) >= size(Q_completo, 1)

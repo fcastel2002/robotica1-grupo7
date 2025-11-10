@@ -14,7 +14,7 @@ model_stl = false;
 animar = false;
 % flag de muestra, habilita o deshabilita los botones de trayectorias
 % individuales para depuracion.
-demo_tareas = true;
+demo_tareas = false;
 %%
 
 %% 0) Parámetros de animación

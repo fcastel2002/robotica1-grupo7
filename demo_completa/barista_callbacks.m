@@ -120,11 +120,16 @@ function handles = barista_callbacks(fig, R, plist, Tlist, qseq, n, N, groups)
 
 
 
-    function ejecutar_todo_r1(R_e, plist_e, Tlist_e, qseq_e, n_e, N_e)
-        ejecutar_trayectorias(R_e, plist_e, Tlist_e, qseq_e, n_e, N_e);
+function ejecutar_todo_r1(R_e, plist_e, Tlist_e, qseq_e, n_e, N_e)
+        
+        % 1. Ejecutar segmentos principales (1-10) y obtener datos, sin graficar.
+        % La animación de estos segmentos ocurre DENTRO de ejecutar_trayectorias.
+        [Q_main, Qd_main, seg_main] = ejecutar_trayectorias(R_e, plist_e, Tlist_e, qseq_e, n_e, N_e, 0.5, false);
         
         try
             fprintf('--- Generando archivo RAW para Arte Latte ---\n');
+            
+            % 2. Planificar trayectoria de arte latte (10-11)
             q_final_secuencia = qseq_e(:,end);
             T_final_mundo = R_e.fkine(q_final_secuencia');
             
@@ -133,33 +138,46 @@ function handles = barista_callbacks(fig, R, plist, Tlist, qseq, n, N, groups)
             centro_base = T_final_base(1:3,4)';
             rpy_base = tr2rpy(T_final_base, 'zyx');
 
-            % Asumimos que plan_arte_latte_q.m existe en el path
-            [Q_arte, ~] = plan_arte_latte_q(R_e, centro_base, rpy_base);
+            [Q_arte, dt] = plan_arte_latte_q(R_e, centro_base, rpy_base);
             
+            % 3. Guardar el archivo raw (comportamiento original)
             waypoints_q = Q_arte;
             path_pos_s = linspace(0, 1, size(waypoints_q, 1))';
-            
             [script_dir, ~, ~] = fileparts(mfilename('fullpath'));
             output_dir = fullfile(script_dir, 'raw_trajectories');
-            
-            start_idx = 10; 
-            end_idx = 11;
-            
+            start_idx = 10; end_idx = 11;
             nombre_archivo_base = sprintf('%s_rawtraj_%d-%d.mat', R_e.name, start_idx, end_idx);
             nombre_archivo_completo = fullfile(output_dir, nombre_archivo_base);
-            
             save(nombre_archivo_completo, 'waypoints_q', 'path_pos_s');
             fprintf('--- Arte Latte guardado en: %s ---\n', nombre_archivo_base);
 
+            % 4. Combinar datos para el gráfico unificado
+            Qd_arte = [zeros(1, R_e.n); diff(Q_arte)] / dt;
+            
+            Q_total = [Q_main; Q_arte];
+            Qd_total = [Qd_main; Qd_arte];
+            
+            seg_bounds_total = seg_main;
+            seg_bounds_total(end+1) = size(Q_total, 1);
+            
+            % 5. Graficar la trayectoria COMPLETA (1-11)
+            fprintf('--- Mostrando gráfico unificado (1-11) ---\n');
+            graficar_perfiles(R_e.name, Q_total, Qd_total, [], seg_bounds_total); 
+
         catch ME
             if strcmp(ME.identifier, 'MATLAB:UndefinedFunction')
-                msgbox('Error: No se encuentra "plan_arte_latte_q.m". Asegúrate de que esté en el path de MATLAB.', 'Error de Función', 'error');
+                msgbox('Error: No se encuentra "plan_arte_latte_q.m".', 'Error', 'error');
             else
                 warning('Fallo al generar/guardar el archivo raw de arte latte: %s', ME.message);
             end
+            
+            % Fallback: si el arte latte falla, graficar solo 1-10
+            if ~isempty(Q_main)
+                 fprintf('--- Mostrando gráfico (solo 1-10) por error en arte latte ---\n');
+                 graficar_perfiles(R_e.name, Q_main, Qd_main, [], seg_main);
+            end
         end
     end
-
     function ejecutar_ambos_sync(R_all)
         fprintf('\n--- Iniciando ejecución Sincrónica OPTIMIZADA (Toppra) ---\n');
         R1_sync = R_all(1);
