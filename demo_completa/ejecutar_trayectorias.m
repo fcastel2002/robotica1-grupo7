@@ -5,10 +5,10 @@ function [Q_completo, Qd_completo, seg_bounds] = ejecutar_trayectorias(R, plist,
 %   N                       -> puntos de interpolación cartesiana
 %% DEBUG
     global animar;
-    
+    global demo_tareas;
     % flag de scope local para guardar sobreescribir o no los archivos
     % rawtraj.
-    nuevas_trayectorias = false;
+    nuevas_trayectorias = true;
 %%
 %% Aclaracion respecto a las trayectorias
 % Las trayectorias generadas en este archivo son las que finalmente el
@@ -58,10 +58,8 @@ for k = 2:numel(plist) % el segundo punto es el primer "destino"
 
     switch tipo_movimiento
         
-        % --- NUEVO CASO 'directa' ---
         case 'directa'
             % Este movimiento es articular, usa jtraj para un perfil suave.
-            % qseq(:,k) ya contiene el q final (calculado en barista.m)
             fprintf('--- Movimiento articular directo ---\n');
             [qt, qd, qdd] = jtraj(q_curr', qseq(:,k)', n); %#ok<ASGLU>
 
@@ -75,8 +73,11 @@ for k = 2:numel(plist) % el segundo punto es el primer "destino"
                 h_frame = trplot(T_tcp, 'frame', '', 'color', 'm', 'length', 0.2,'width',0.2,'arrow');
                 if(animar)
                     R.animate(qt(i,:));
-                    setappdata(fig,'h_tcp_frame', h_frame);
-                    drawnow;
+                    if(~demo_tareas)
+                        setappdata(fig,'h_tcp_frame', h_frame);
+                    
+                        drawnow;
+                    end
 
                 end
             end
@@ -99,8 +100,10 @@ for k = 2:numel(plist) % el segundo punto es el primer "destino"
                 h_frame = trplot(T_tcp, 'frame', '', 'color', 'b', 'length', 0.2,'width',0.2,'arrow');
                 if(animar)
                     R.animate(qt(i,:));
+                    if(~demo_tareas)
                     setappdata(fig,'h_tcp_frame', h_frame);
                     drawnow;
+                    end
                 end
                 
             end
@@ -132,9 +135,11 @@ for k = 2:numel(plist) % el segundo punto es el primer "destino"
                 set(h_frame, 'Matrix', T_tcp.double);
                  if(animar)
                     R.animate(q_next');
+                    if(~demo_tareas)
                     setappdata(fig,'h_tcp_frame', h_frame);
                 
                     drawnow;
+                    end
                 end 
             end
             q_segmento = q_tray_cart;

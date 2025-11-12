@@ -8,13 +8,13 @@ global demo_tareas;
 
 
 % flag local, cambiar a false si no se desean ver los modelos STL
-model_stl = false;
+model_stl = true;
 
 % flag de animación (se muestra gráficas pero no se ejecutan animaciones)
-animar = false;
+animar = true;
 % flag de muestra, habilita o deshabilita los botones de trayectorias
 % individuales para depuracion.
-demo_tareas = false;
+demo_tareas = true;
 %%
 
 %% 0) Parámetros de animación
@@ -77,8 +77,8 @@ plist_R2 = {
     struct('pose',[-0.2,  0.6   0.3     0.01   -pi/2+0.01      -pi/2+0.01],'tipo','articular'),
     %       1.2. Trayectoria
     struct('pose',[-0.2,  0.5  0.3     0.01   -pi/2+0.01      -pi/2+0.01],'tipo','cartesiana'),
-    %       1.2.5. Acomodación articular (NUEVO)
-    %       1.3. Trayectoria (SINGULARIDAD ACA)
+    %       
+    %       1.3. Trayectoria 
     struct('pose',[0.25,  0.5  0.4     0.01   -pi/2+0.01      -pi/2+0.01],'tipo','cartesiana_fina'),
     %   2. Lleva portafiltro a cafetera 
     struct('pose',[0.25   0.6   0.4     0.01  -pi/2+0.01   -pi/2],'tipo','cartesiana'),
@@ -95,9 +95,9 @@ plist_R2 = {
     %   6. Retira la taza con cafe 
     struct('pose',[0.25   0.6   0.35    0  -pi/2    -pi/2],'tipo','articular'),
     %   7. Pre-Entrega (Orientar taza nivelada)
-    struct('pose', [0.4, -0.15, 0.35, 0.001, -pi/2, pi], 'tipo', 'cartesiana'),
+    struct('pose', [0.5, -0.15, 0.40, 0.001, -pi/2, pi], 'tipo', 'cartesiana'),
     %   8. Punto de Entrega (Handover)
-    struct('pose', [0.4, -0.15, 0.35, 0.001, -pi/2, pi], 'tipo', 'cartesiana'), 
+    struct('pose', [0.5, -0.15, 0.40, 0.001, -pi/2, pi], 'tipo', 'cartesiana'), 
 };
 
 plist_R1_poses = cellfun(@(s) s.pose, plist_R1, 'UniformOutput', false);
@@ -167,27 +167,28 @@ figure(10); clf;
 if(model_stl)
     R1.plot3d(qseq_R1(:,1)', ...
         'workspace', workspace, ...
-        'notiles', ...
+        'notiles', 'noarrow', ...
         'path', modelPath);
     hold on;
-    R2.plot3d(qseq_R2(:,1)','workspace', workspace, 'notiles', 'path',modelPath2);
-    view(135, 25);
-    camtarget([0 0 0]);
-    camva(8); % ángulo de vista razonable
+    R2.plot3d(qseq_R2(:,1)','workspace', workspace, 'notiles','noarrow', 'path',modelPath2);
+
     grid on;
 else
     R1.plot(qseq_R1(:,1)','workspace', workspace, 'scale',1, 'jointdiam',1.4,'nowrist','notiles');
     hold on;
     R2.plot(qseq_R2(:,1)','workspace', workspace, 'scale',1, 'jointdiam',1.4,'nowrist','notiles');
+
+    trplot(R1.base, 'frame', R1.name, 'color', 'k', 'length', 0.5,'width',0.5,'rgb','arrow');
+    trplot(R2.base, 'frame', R2.name, 'color', 'k', 'length', 0.5,'width',0.5,'rgb','arrow');
 end
-trplot(R1.base, 'frame', R1.name, 'color', 'k', 'length', 0.5,'width',0.5,'rgb','arrow');
-trplot(R2.base, 'frame', R2.name, 'color', 'k', 'length', 0.5,'width',0.5,'rgb','arrow');
+    view(135, 25);
+    camtarget([0 0 0]);
+    camva(5);
 
 title('Robots Cooperativos Baristas');
 
 % Graficar puntos de Tlist
 for k = 1:numel(Tlist_R1)
-    % --- MODIFICADO --- : Solo grafica si NO es 'directa'
     if ~strcmp(plist_R1{k}.tipo, 'directa')
         T = Tlist_R1{k};
         pos = T(1:3,4);
@@ -195,7 +196,6 @@ for k = 1:numel(Tlist_R1)
     end
 end
 for k = 1:numel(Tlist_R2)
-    % --- MODIFICADO --- : Solo grafica si NO es 'directa'
     if ~strcmp(plist_R2{k}.tipo, 'directa')
         T = Tlist_R2{k};
         pos = T(1:3,4);
@@ -205,7 +205,7 @@ end
 
 % Definir grupos de trayectos (índices en plist) por pasos principales
 groups_R1 = { [1 2], [2 3], [3 4], [4 5], [5 6],[6 7],[7 8] };
-groups_R2 = { [1 2], [2 3], [3 4 5 6], [6 7], [7 8 9], [8 9 10], [10 11 12], [12 13], [13 14 15] };
+groups_R2 = { [1 2], [2 3], [4 5], [6 7], [7 8 9], [8 9 10], [10 11 12], [12 13], [13 14 15] };
 N1 = numel(plist_R1);  % cantidad de puntos de R1
 N2 = numel(plist_R2);  % cantidad de puntos de R2
 groups_R1 = completar_grupos(groups_R1, N1);
@@ -218,7 +218,6 @@ crear_gui([R1 R2], {plist_R1 plist_R2}, {Tlist_R1 Tlist_R2}, {qseq_R1 qseq_R2}, 
 
 
 function mostrar_ayuda()
-    % --- MODIFICADO --- : Añadido punto 1.2.5
     ayuda = sprintf([ ...
         'R1 (Leche):\n', ...
         '  0: Reposo\n', ...
@@ -233,7 +232,7 @@ function mostrar_ayuda()
         '  0: Reposo\n', ...
         '  1: Recoge portafiltro (desde molino)\n', ...
         '  1.2: Trayectoria intermedia (cartesiana)\n', ...
-        '  1.2.5: Acomodación articular (directa)\n', ... % <-- NUEVO
+        '  1.2.5: Acomodación articular (directa)\n', ... 
         '  1.3: Trayectoria intermedia (cartesiana)\n', ...
         '  2: Lleva portafiltro a cafetera (cartesiana)\n', ...
         '  3: Introduce portafiltro (sube 7 cm)\n', ...

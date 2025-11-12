@@ -6,6 +6,7 @@ function [q_seg, qd_seg, qdd_seg] = ejecutar_toppra(R, archivo_mat, plot_results
 %   plot_results  - (Opcional) true/false. Si es true, genera los gráficos.
 %% DEBUG
     global animar;
+    global demo_tareas;
 %%
 
 if nargin < 3
@@ -41,6 +42,7 @@ h_frame = getappdata(fig,'h_tcp_frame');
 if isempty(h_frame) || ~isgraphics(h_frame)
     T0 = R.fkine(q_traj(1,:));
     if isa(T0,'SE3'), T0 = T0.T; end
+    
     hold on;
     h_frame = trplot(T0, 'frame','', 'color','m', 'length',0.2);
     hold off;
@@ -76,7 +78,7 @@ if(animar)
             T = R.fkine(qi);
             if isa(T,'SE3'), T = T.T; end
             set(h_frame, 'Matrix', T);
-            drawnow limitrate nocallbacks
+            drawnow limitrate nocallbacks;
         end
 
         i = i + decim_draw;
@@ -100,6 +102,7 @@ else
     R.animate(q_final);
     T = R.fkine(q_final);
     if isa(T,'SE3'), T = T.T; end
+    
     set(h_frame, 'Matrix', T);
     drawnow;
 end

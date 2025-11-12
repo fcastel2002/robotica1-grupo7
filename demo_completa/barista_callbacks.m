@@ -237,19 +237,18 @@ function ejecutar_todo_r1(R_e, plist_e, Tlist_e, qseq_e, n_e, N_e)
         t_sim = 0;
         t_start = tic;
         
-        anim_decim = 3; 
+        anim_decim = 4; 
         anim_count = 0;
         min_pause_duration = 0.002; 
 
         while ~state_R1.finished || ~state_R2.finished
             t_real = toc(t_start);
             t_wait = t_sim - t_real; 
-
             if t_wait > 0
-                if t_wait > min_pause_duration
-                    pause(t_wait);
+                % pero usa más CPU.
+                while (t_sim - toc(t_start)) > 0.0005 % Espera activa
                 end
-                continue; 
+                continue;
             end
             
             t_sim = t_sim + dt_sim;

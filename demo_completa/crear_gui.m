@@ -26,7 +26,7 @@ end
 % ====================================================================
 
 % Definir variables de layout comunes
-h = 0.06; dy = 0.08; y0 = 0.80;
+h = 0.06; dy = 0.08; y0 = 0.1;
 
 if ~isempty(demo_tareas) && demo_tareas == true
     %% ---------------- MODO DEMO (5 Botones) ----------------
